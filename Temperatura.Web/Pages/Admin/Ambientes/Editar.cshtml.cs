@@ -33,7 +33,13 @@ public class EditarModel(
             .Where(x => x.AmbienteId == id && x.Activo)
             .ToDictionaryAsync(x => x.TipoMedicionId);
 
+        var configuracionesHorario = await _context.AmbientesHorarios
+            .AsNoTracking()
+            .Where(x => x.AmbienteId == id && x.Activo)
+            .ToDictionaryAsync(x => x.HorarioId);
+
         var tipos = await ObtenerTiposMedicionAsync();
+        var horarios = await ObtenerHorariosAsync();
         Input = new AmbienteInput
         {
             Id = ambiente.Id,
@@ -43,8 +49,15 @@ public class EditarModel(
             {
                 configuraciones.TryGetValue(tipo.Id, out var configuracion);
                 return CrearMedicionInput(tipo, configuracion);
+            }).ToList(),
+            Horarios = horarios.Select(horario =>
+            {
+                configuracionesHorario.TryGetValue(horario.Id, out var configuracion);
+                return CrearHorarioInput(horario, configuracion);
             }).ToList()
         };
+
+        HistorialHorarios = await ObtenerHistorialHorariosAsync(id);
         return Page();
     }
 
@@ -57,7 +70,9 @@ public class EditarModel(
         }
 
         var tipos = await ObtenerTiposMedicionAsync();
+        var horarios = await ObtenerHorariosAsync();
         NormalizarMedicionesEnviadas(tipos);
+        NormalizarHorariosEnviados(horarios);
 
         Input.Nombre = Input.Nombre.Trim();
         if (await _context.Ambientes.AnyAsync(x => x.Id != Input.Id && x.Nombre == Input.Nombre))
@@ -66,8 +81,10 @@ public class EditarModel(
         }
 
         ValidarMediciones();
+        ValidarHorarios();
         if (!ModelState.IsValid)
         {
+            HistorialHorarios = await ObtenerHistorialHorariosAsync(ambiente.Id);
             return Page();
         }
 
@@ -89,6 +106,20 @@ public class EditarModel(
                 fechaActual);
         }
 
+        var configuracionesHorario = await _context.AmbientesHorarios
+            .Where(x => x.AmbienteId == ambiente.Id)
+            .OrderByDescending(x => x.VigenteDesde)
+            .ToListAsync();
+
+        foreach (var horario in Input.Horarios)
+        {
+            AplicarConfiguracionHorario(
+                ambiente.Id,
+                horario,
+                configuracionesHorario.Where(x => x.HorarioId == horario.HorarioId).ToList(),
+                fechaActual);
+        }
+
         try
         {
             await _context.SaveChangesAsync();
@@ -98,12 +129,15 @@ public class EditarModel(
             ModelState.AddModelError(
                 string.Empty,
                 "No se pudo guardar la configuración. Recarga la página e inténtalo nuevamente.");
+            HistorialHorarios = await ObtenerHistorialHorariosAsync(ambiente.Id);
             return Page();
         }
 
-        TempData["MensajeExito"] = $"El ambiente {ambiente.Nombre} y sus mediciones fueron actualizados.";
+        TempData["MensajeExito"] = $"El ambiente {ambiente.Nombre}, sus mediciones y horarios fueron actualizados.";
         return RedirectToPage("Index");
     }
+
+    public IReadOnlyList<HorarioHistorico> HistorialHorarios { get; private set; } = [];
 
     private async Task<List<TipoMedicion>> ObtenerTiposMedicionAsync()
     {
@@ -111,6 +145,32 @@ public class EditarModel(
             .AsNoTracking()
             .Where(x => x.Activo)
             .OrderBy(x => x.Id)
+            .ToListAsync();
+    }
+
+    private async Task<List<Horario>> ObtenerHorariosAsync()
+    {
+        return await _context.Horarios
+            .AsNoTracking()
+            .Where(x => x.Activo)
+            .OrderBy(x => x.EsCierreDiaOperativoAnterior)
+            .ThenBy(x => x.HoraReferencia)
+            .ToListAsync();
+    }
+
+    private async Task<IReadOnlyList<HorarioHistorico>> ObtenerHistorialHorariosAsync(int ambienteId)
+    {
+        return await _context.AmbientesHorarios
+            .AsNoTracking()
+            .Where(x => x.AmbienteId == ambienteId && !x.Activo)
+            .OrderByDescending(x => x.VigenteDesde)
+            .ThenBy(x => x.Horario.HoraReferencia)
+            .Select(x => new HorarioHistorico(
+                x.Horario.Nombre,
+                x.MinutosAntes,
+                x.MinutosDespues,
+                x.VigenteDesde,
+                x.VigenteHasta))
             .ToListAsync();
     }
 
@@ -144,6 +204,36 @@ public class EditarModel(
         }).ToList();
     }
 
+    private void NormalizarHorariosEnviados(IReadOnlyCollection<Horario> horarios)
+    {
+        var gruposEnviados = Input.Horarios.GroupBy(x => x.HorarioId).ToList();
+        if (gruposEnviados.Any(x => x.Count() > 1))
+        {
+            ModelState.AddModelError(string.Empty, "La solicitud contiene horarios duplicados.");
+        }
+
+        var enviados = gruposEnviados.ToDictionary(x => x.Key, x => x.First());
+        var idsValidos = horarios.Select(x => x.Id).ToHashSet();
+        if (enviados.Keys.Any(x => !idsValidos.Contains(x)))
+        {
+            ModelState.AddModelError(string.Empty, "La solicitud contiene un horario inválido.");
+        }
+
+        Input.Horarios = horarios.Select(horario =>
+        {
+            enviados.TryGetValue(horario.Id, out var enviado);
+            return new HorarioInput
+            {
+                HorarioId = horario.Id,
+                Nombre = horario.Nombre,
+                EsCierreDiaOperativoAnterior = horario.EsCierreDiaOperativoAnterior,
+                Habilitado = enviado?.Habilitado ?? false,
+                MinutosAntes = enviado?.MinutosAntes,
+                MinutosDespues = enviado?.MinutosDespues
+            };
+        }).ToList();
+    }
+
     private void ValidarMediciones()
     {
         for (var indice = 0; indice < Input.Mediciones.Count; indice++)
@@ -173,6 +263,32 @@ public class EditarModel(
                 ModelState.AddModelError(
                     $"Input.Mediciones[{indice}].RangoMaximo",
                     "El máximo debe ser mayor o igual que el mínimo.");
+            }
+        }
+    }
+
+    private void ValidarHorarios()
+    {
+        for (var indice = 0; indice < Input.Horarios.Count; indice++)
+        {
+            var horario = Input.Horarios[indice];
+            if (!horario.Habilitado)
+            {
+                continue;
+            }
+
+            if (horario.MinutosAntes is null or < 0 or > 720)
+            {
+                ModelState.AddModelError(
+                    $"Input.Horarios[{indice}].MinutosAntes",
+                    "Ingresa entre 0 y 720 minutos.");
+            }
+
+            if (horario.MinutosDespues is null or < 1 or > 720)
+            {
+                ModelState.AddModelError(
+                    $"Input.Horarios[{indice}].MinutosDespues",
+                    "Ingresa entre 1 y 720 minutos.");
             }
         }
     }
@@ -257,6 +373,84 @@ public class EditarModel(
         };
     }
 
+    private void AplicarConfiguracionHorario(
+        int ambienteId,
+        HorarioInput horario,
+        IReadOnlyCollection<AmbienteHorario> configuraciones,
+        DateOnly fechaActual)
+    {
+        var configuracionActiva = configuraciones.SingleOrDefault(x => x.Activo);
+
+        if (!horario.Habilitado)
+        {
+            if (configuracionActiva is not null)
+            {
+                configuracionActiva.Activo = false;
+                configuracionActiva.VigenteHasta = configuracionActiva.VigenteDesde < fechaActual
+                    ? fechaActual.AddDays(-1)
+                    : fechaActual;
+            }
+
+            return;
+        }
+
+        var minutosAntes = horario.MinutosAntes!.Value;
+        var minutosDespues = horario.MinutosDespues!.Value;
+        if (configuracionActiva is not null &&
+            configuracionActiva.MinutosAntes == minutosAntes &&
+            configuracionActiva.MinutosDespues == minutosDespues)
+        {
+            return;
+        }
+
+        if (configuracionActiva is not null && configuracionActiva.VigenteDesde >= fechaActual)
+        {
+            configuracionActiva.MinutosAntes = minutosAntes;
+            configuracionActiva.MinutosDespues = minutosDespues;
+            configuracionActiva.VigenteHasta = null;
+            return;
+        }
+
+        if (configuracionActiva is not null)
+        {
+            configuracionActiva.Activo = false;
+            configuracionActiva.VigenteHasta = fechaActual.AddDays(-1);
+        }
+
+        var configuracionDelDia = configuraciones.FirstOrDefault(x => x.VigenteDesde == fechaActual);
+        if (configuracionDelDia is not null)
+        {
+            configuracionDelDia.MinutosAntes = minutosAntes;
+            configuracionDelDia.MinutosDespues = minutosDespues;
+            configuracionDelDia.VigenteHasta = null;
+            configuracionDelDia.Activo = true;
+            return;
+        }
+
+        _context.AmbientesHorarios.Add(new AmbienteHorario
+        {
+            AmbienteId = ambienteId,
+            HorarioId = horario.HorarioId,
+            MinutosAntes = minutosAntes,
+            MinutosDespues = minutosDespues,
+            VigenteDesde = fechaActual,
+            Activo = true
+        });
+    }
+
+    private static HorarioInput CrearHorarioInput(Horario horario, AmbienteHorario? configuracion)
+    {
+        return new HorarioInput
+        {
+            HorarioId = horario.Id,
+            Nombre = horario.Nombre,
+            EsCierreDiaOperativoAnterior = horario.EsCierreDiaOperativoAnterior,
+            Habilitado = configuracion is not null,
+            MinutosAntes = configuracion?.MinutosAntes ?? 30,
+            MinutosDespues = configuracion?.MinutosDespues ?? 60
+        };
+    }
+
     public sealed class AmbienteInput
     {
         [Required]
@@ -269,6 +463,8 @@ public class EditarModel(
         public bool Activo { get; set; }
 
         public List<MedicionInput> Mediciones { get; set; } = [];
+
+        public List<HorarioInput> Horarios { get; set; } = [];
     }
 
     public sealed class MedicionInput
@@ -285,4 +481,26 @@ public class EditarModel(
 
         public decimal? RangoMaximo { get; set; }
     }
+
+    public sealed class HorarioInput
+    {
+        public int HorarioId { get; set; }
+
+        public string Nombre { get; set; } = string.Empty;
+
+        public bool EsCierreDiaOperativoAnterior { get; set; }
+
+        public bool Habilitado { get; set; }
+
+        public short? MinutosAntes { get; set; }
+
+        public short? MinutosDespues { get; set; }
+    }
+
+    public sealed record HorarioHistorico(
+        string Horario,
+        short MinutosAntes,
+        short MinutosDespues,
+        DateOnly VigenteDesde,
+        DateOnly? VigenteHasta);
 }

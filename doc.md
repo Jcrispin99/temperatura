@@ -439,6 +439,31 @@ Decisiones técnicas todavía pendientes:
 
 - Lugar de despliegue.
 
+### Puesta en marcha en Windows
+
+En desarrollo, la aplicación usa SQL Server mediante autenticación integrada. La conexión está configurada en `appsettings.Development.json`:
+
+```json
+"DefaultConnection": "Server=.;Database=TemperaturaDb;Integrated Security=True;TrustServerCertificate=True"
+```
+
+La aplicación aplica automáticamente las migraciones pendientes al arrancar. Después ejecuta un seeder idempotente que garantiza los roles `Registrador` y `Supervisor` y crea, si todavía no existe, el supervisor configurado en `appsettings.json`.
+
+La contraseña inicial no se almacena en Git. En una terminal, desde la raíz de la solución, debe configurarse una vez:
+
+```powershell
+dotnet user-secrets set "Seed:Supervisor:Password" "<CONTRASENA_INICIAL>" --project Temperatura.Web
+dotnet run --project Temperatura.Web
+```
+
+Cuenta inicial solicitada:
+
+- Correo: `j99crispin@gmail.com`.
+- Rol: `Supervisor`.
+- Contraseña inicial: la definida en `Seed:Supervisor:Password`.
+
+El seeder no duplica el usuario ni reemplaza su contraseña si ya existe. La contraseña inicial debe considerarse temporal y cambiarse antes de exponer la aplicación fuera del entorno local.
+
 ## 14. Alcance sugerido del MVP
 
 1. Inicio y cierre de sesión.
@@ -449,13 +474,15 @@ Decisiones técnicas todavía pendientes:
 6. Visualización del avance diario del ambiente.
 7. Consulta del historial sin edición ni eliminación.
 
-Los ambientes, horarios, mediciones, rangos y asignaciones iniciales se cargan como datos iniciales. El supervisor ya puede administrar usuarios, asignarles ambientes, crear ambientes y configurar sus mediciones y rangos. La configuración de horarios y la vista completa de supervisión se incorporarán en las siguientes etapas.
+Los ambientes, horarios, mediciones, rangos y asignaciones iniciales se cargan como datos iniciales. El supervisor ya puede administrar usuarios, asignarles ambientes, crear ambientes y configurar sus mediciones, rangos, horarios y ventanas de captura. Cada cambio de horario conserva las vigencias anteriores por día operativo.
+
+El historial de registros también está disponible. El supervisor consulta todos los ambientes y los registradores únicamente sus ambientes asignados. La consulta permite filtrar por fecha operativa, ambiente, usuario, horario, puntualidad y estado del rango, además de abrir un detalle de solo lectura con los límites aplicados al guardar.
+
+La página de inicio autenticada funciona como panel diario. Para cada ambiente calcula registros completados frente a esperados, avance total, cumplimiento de las rondas ya exigibles, horarios completados, pendientes, vencidos y próximos, registros tardíos y alertas de rango. El registrador ve por defecto su ambiente predeterminado y puede cambiar entre sus demás asignaciones; el supervisor recibe un resumen de todos los ambientes activos.
 
 ## 15. Decisiones pendientes antes de programar
 
-- Confirmar la versión de .NET que se utilizará.
 - Definir los permisos detallados de cada rol.
 - Definir el lugar de despliegue de la aplicación.
-- Obtener los datos de conexión de desarrollo para la instancia de SQL Server.
 
 No es necesario definir ahora los rangos reales. El sistema comenzará con datos demostrativos y permitirá que el responsable los configure posteriormente.

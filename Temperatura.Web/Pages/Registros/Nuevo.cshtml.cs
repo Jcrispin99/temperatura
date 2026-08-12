@@ -179,10 +179,16 @@ public class NuevoModel(
 
         AmbienteSeleccionado = ambiente.Nombre;
         var ahoraLocal = _ventanaRegistroService.ObtenerAhoraLocal();
+        var fechaLocal = DateOnly.FromDateTime(ahoraLocal.DateTime);
+        var fechaOperativaMinima = fechaLocal.AddDays(-1);
         var configuracionesHorario = await _context.AmbientesHorarios
             .AsNoTracking()
             .Include(x => x.Horario)
-            .Where(x => x.AmbienteId == ambiente.Id && x.Activo && x.Horario.Activo)
+            .Where(x =>
+                x.AmbienteId == ambiente.Id &&
+                x.Horario.Activo &&
+                x.VigenteDesde <= fechaLocal &&
+                (x.VigenteHasta == null || x.VigenteHasta >= fechaOperativaMinima))
             .ToListAsync();
 
         var ventanas = _ventanaRegistroService.ObtenerVentanasAbiertas(configuracionesHorario, ahoraLocal);
@@ -230,17 +236,26 @@ public class NuevoModel(
         }
 
         var fechaOperativa = HorarioSeleccionado.FechaOperativa;
-        var configuracionesMedicion = await _context.AmbientesMediciones
+        var configuracionesMedicionCandidatas = await _context.AmbientesMediciones
             .AsNoTracking()
             .Include(x => x.TipoMedicion)
             .Where(x =>
                 x.AmbienteId == ambiente.Id &&
-                x.Activo &&
                 x.TipoMedicion.Activo &&
                 x.VigenteDesde <= fechaOperativa &&
                 (x.VigenteHasta == null || x.VigenteHasta >= fechaOperativa))
             .OrderBy(x => x.TipoMedicionId)
             .ToListAsync();
+
+        var configuracionesMedicion = configuracionesMedicionCandidatas
+            .GroupBy(x => x.TipoMedicionId)
+            .Select(x => x
+                .OrderByDescending(y => y.Activo)
+                .ThenByDescending(y => y.VigenteDesde)
+                .ThenByDescending(y => y.Id)
+                .First())
+            .OrderBy(x => x.TipoMedicionId)
+            .ToList();
 
         Mediciones = configuracionesMedicion.Select(x => new MedicionInput
         {

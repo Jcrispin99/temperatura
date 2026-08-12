@@ -1,7 +1,8 @@
 @{
     var rutaActual = Context.Request.Path.Value ?? string.Empty;
     var enInicio = rutaActual == "/" || rutaActual.Equals("/Index", StringComparison.OrdinalIgnoreCase);
-    var enRegistros = rutaActual.StartsWith("/Registros", StringComparison.OrdinalIgnoreCase);
+    var enNuevoRegistro = rutaActual.Equals("/Registros/Nuevo", StringComparison.OrdinalIgnoreCase);
+    var enHistorial = rutaActual.StartsWith("/Registros/Historial", StringComparison.OrdinalIgnoreCase);
     var enUsuarios = rutaActual.StartsWith("/Admin/Usuarios", StringComparison.OrdinalIgnoreCase);
     var enAmbientes = rutaActual.StartsWith("/Admin/Ambientes", StringComparison.OrdinalIgnoreCase);
 }
@@ -58,7 +59,7 @@
 
                         @if (User.Identity?.IsAuthenticated == true)
                         {
-                            <li class="nav-item @(enRegistros ? "active" : string.Empty)">
+                            <li class="nav-item @(enNuevoRegistro ? "active" : string.Empty)">
                                 <a class="nav-link" asp-area="" asp-page="/Registros/Nuevo">
                                     <span class="nav-link-icon d-md-none d-lg-inline-block" aria-hidden="true">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -67,6 +68,18 @@
                                         </svg>
                                     </span>
                                     <span class="nav-link-title">Registrar mediciones</span>
+                                </a>
+                            </li>
+                            <li class="nav-item @(enHistorial ? "active" : string.Empty)">
+                                <a class="nav-link" asp-area="" asp-page="/Registros/Historial/Index">
+                                    <span class="nav-link-icon d-md-none d-lg-inline-block" aria-hidden="true">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M12 8v4l2 2" />
+                                            <path d="M3.05 11a9 9 0 1 1 .5 4" />
+                                            <path d="M3 16v-5h5" />
+                                        </svg>
+                                    </span>
+                                    <span class="nav-link-title">Historial</span>
                                 </a>
                             </li>
 

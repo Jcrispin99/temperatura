@@ -64,6 +64,30 @@ public class VentanaRegistroServiceTests
         Assert.Equal(EstadoPuntualidad.Tardio, ventana.Puntualidad);
     }
 
+    [Fact]
+    public void MedianocheUsaLaConfiguracionHistoricaDelDiaOperativoAnterior()
+    {
+        var historica = CrearConfiguracion(
+            new TimeOnly(0, 0),
+            esCierreDiaOperativoAnterior: true);
+        historica.Activo = false;
+        historica.VigenteHasta = new DateOnly(2026, 8, 11);
+
+        var actual = CrearConfiguracion(
+            new TimeOnly(0, 0),
+            esCierreDiaOperativoAnterior: true);
+        actual.Id = 2;
+        actual.MinutosDespues = 15;
+        actual.VigenteDesde = new DateOnly(2026, 8, 12);
+
+        var ahora = new DateTimeOffset(2026, 8, 12, 0, 30, 0, TimeSpan.FromHours(-5));
+
+        var ventana = Assert.Single(_service.ObtenerVentanasAbiertas([historica, actual], ahora));
+
+        Assert.Equal(historica.Id, ventana.Configuracion.Id);
+        Assert.Equal(new DateOnly(2026, 8, 11), ventana.FechaOperativa);
+    }
+
     private static AmbienteHorario CrearConfiguracion(
         TimeOnly hora,
         bool esCierreDiaOperativoAnterior = false)

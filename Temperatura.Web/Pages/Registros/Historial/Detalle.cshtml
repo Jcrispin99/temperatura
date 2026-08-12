@@ -1,0 +1,98 @@
+@page "{id:long}"
+@using Temperatura.Web.Domain.Enums
+@model Temperatura.Web.Pages.Registros.Historial.DetalleModel
+@{
+    ViewData["Title"] = "Detalle del registro";
+    var fueraDeRango = Model.Registro.Mediciones.Any(x => x.EstadoRango != EstadoRango.DentroDeRango);
+}
+
+<div class="row justify-content-center">
+    <div class="col-xl-9">
+        <div class="mb-4">
+            <a asp-page="Index" class="text-decoration-none">← Volver al historial</a>
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-end gap-2 mt-2">
+                <div>
+                    <h1 class="h2 mb-1">@Model.Registro.Ambiente · @Model.Registro.Horario</h1>
+                    <p class="text-secondary mb-0">Fecha operativa @Model.Registro.FechaOperativa.ToString("dd/MM/yyyy")</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <span class="badge @(Model.Registro.Puntualidad == EstadoPuntualidad.Puntual ? "text-bg-success" : "text-bg-warning")">
+                        @(Model.Registro.Puntualidad == EstadoPuntualidad.Puntual ? "Puntual" : "Tardío")
+                    </span>
+                    <span class="badge @(fueraDeRango ? "text-bg-danger" : "text-bg-azure")">
+                        @(fueraDeRango ? "Con alerta de rango" : "Dentro de rango")
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-sm-6 col-lg-3">
+                        <div class="text-secondary small">Ambiente</div>
+                        <div class="fw-semibold">@Model.Registro.Ambiente</div>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <div class="text-secondary small">Horario esperado</div>
+                        <div class="fw-semibold">@Model.Registro.Horario</div>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <div class="text-secondary small">Registrado por</div>
+                        <div class="fw-semibold">@Model.Registro.Usuario</div>
+                        <div class="small text-secondary">@Model.Registro.Email</div>
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <div class="text-secondary small">Fecha y hora real</div>
+                        <div class="fw-semibold">@Model.Registro.FechaHoraRegistro.ToString("dd/MM/yyyy HH:mm")</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header">
+                <h2 class="card-title">Mediciones registradas</h2>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-vcenter mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Medición</th>
+                            <th>Valor</th>
+                            <th>Rango aplicado</th>
+                            <th>Resultado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var medicion in Model.Registro.Mediciones)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@medicion.Nombre</td>
+                                <td>@medicion.Valor.ToString("0.##") @medicion.Unidad</td>
+                                <td>@medicion.LimiteMinimo.ToString("0.##") – @medicion.LimiteMaximo.ToString("0.##") @medicion.Unidad</td>
+                                <td>
+                                    @switch (medicion.EstadoRango)
+                                    {
+                                        case EstadoRango.PorDebajo:
+                                            <span class="badge text-bg-danger">Por debajo</span>
+                                            break;
+                                        case EstadoRango.PorEncima:
+                                            <span class="badge text-bg-danger">Por encima</span>
+                                            break;
+                                        default:
+                                            <span class="badge text-bg-success">Dentro de rango</span>
+                                            break;
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer text-secondary small">
+                Los límites mostrados son los que se aplicaron al momento de guardar el registro.
+            </div>
+        </div>
+    </div>
+</div>

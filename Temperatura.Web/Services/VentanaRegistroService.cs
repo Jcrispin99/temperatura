@@ -28,12 +28,22 @@ public sealed class VentanaRegistroService : IVentanaRegistroService
         var fechasOperativasPosibles = new[] { fechaLocal, fechaLocal.AddDays(-1) };
         var ventanas = new List<VentanaRegistroAbierta>();
 
-        foreach (var configuracion in configuraciones.Where(x => x.Activo && x.Horario.Activo))
+        foreach (var grupoHorario in configuraciones
+                     .Where(x => x.Horario.Activo)
+                     .GroupBy(x => x.HorarioId))
         {
             foreach (var fechaOperativa in fechasOperativasPosibles)
             {
-                if (configuracion.VigenteDesde > fechaOperativa ||
-                    configuracion.VigenteHasta < fechaOperativa)
+                var configuracion = grupoHorario
+                    .Where(x =>
+                        x.VigenteDesde <= fechaOperativa &&
+                        (x.VigenteHasta is null || x.VigenteHasta >= fechaOperativa))
+                    .OrderByDescending(x => x.Activo)
+                    .ThenByDescending(x => x.VigenteDesde)
+                    .ThenByDescending(x => x.Id)
+                    .FirstOrDefault();
+
+                if (configuracion is null)
                 {
                     continue;
                 }

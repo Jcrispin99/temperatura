@@ -26,6 +26,7 @@ builder.Services.Configure<SecurityStampValidatorOptions>(options =>
     options.ValidationInterval = TimeSpan.FromMinutes(5));
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IVentanaRegistroService, VentanaRegistroService>();
+builder.Services.AddScoped<IAvanceDiarioService, AvanceDiarioService>();
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("RegistroPublicoDeshabilitado", policy =>
@@ -38,6 +39,8 @@ builder.Services.AddRazorPages(options =>
         "RegistroPublicoDeshabilitado"));
 
 var app = builder.Build();
+
+await app.Services.InicializarDatosAsync();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

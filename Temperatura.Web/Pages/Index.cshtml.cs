@@ -1,12 +1,84 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using Temperatura.Web.Data;
+using Temperatura.Web.Domain;
+using Temperatura.Web.Services;
 
 namespace Temperatura.Web.Pages;
 
-public class IndexModel : PageModel
+public class IndexModel(
+    ApplicationDbContext context,
+    UserManager<ApplicationUser> userManager,
+    IAvanceDiarioService avanceDiarioService) : PageModel
 {
-    public void OnGet()
-    {
+    private readonly ApplicationDbContext _context = context;
+    private readonly UserManager<ApplicationUser> _userManager = userManager;
+    private readonly IAvanceDiarioService _avanceDiarioService = avanceDiarioService;
 
+    [BindProperty(SupportsGet = true)]
+    public int? AmbienteId { get; set; }
+
+    public IReadOnlyList<AmbienteOpcion> Ambientes { get; private set; } = [];
+    public IReadOnlyList<ResumenAvanceAmbiente> Resumenes { get; private set; } = [];
+    public ResumenAvanceAmbiente? ResumenSeleccionado => Resumenes.FirstOrDefault();
+    public bool EsSupervisor => User.IsInRole("Supervisor");
+
+    public async Task OnGetAsync()
+    {
+        if (User.Identity?.IsAuthenticated != true)
+        {
+            return;
+        }
+
+        var usuarioId = _userManager.GetUserId(User)!;
+        Ambientes = await ObtenerAmbientesAsync(usuarioId);
+        if (Ambientes.Count == 0)
+        {
+            return;
+        }
+
+        if (EsSupervisor)
+        {
+            Resumenes = await _avanceDiarioService.ObtenerAvanceActualAsync(
+                Ambientes.Select(x => x.Id).ToArray(),
+                HttpContext.RequestAborted);
+            return;
+        }
+
+        var ambienteSeleccionado = Ambientes.FirstOrDefault(x => x.Id == AmbienteId);
+        if (ambienteSeleccionado is null)
+        {
+            ambienteSeleccionado = Ambientes.FirstOrDefault(x => x.EsPredeterminado) ?? Ambientes[0];
+            AmbienteId = ambienteSeleccionado.Id;
+        }
+
+        Resumenes = await _avanceDiarioService.ObtenerAvanceActualAsync(
+            [ambienteSeleccionado.Id],
+            HttpContext.RequestAborted);
     }
+
+    private async Task<IReadOnlyList<AmbienteOpcion>> ObtenerAmbientesAsync(string usuarioId)
+    {
+        if (EsSupervisor)
+        {
+            return await _context.Ambientes
+                .AsNoTracking()
+                .Where(x => x.Activo)
+                .OrderBy(x => x.Nombre)
+                .Select(x => new AmbienteOpcion(x.Id, x.Nombre, false))
+                .ToListAsync();
+        }
+
+        return await _context.UsuariosAmbientes
+            .AsNoTracking()
+            .Where(x => x.UsuarioId == usuarioId && x.Activo && x.Ambiente.Activo)
+            .OrderByDescending(x => x.EsPredeterminado)
+            .ThenBy(x => x.Ambiente.Nombre)
+            .Select(x => new AmbienteOpcion(x.AmbienteId, x.Ambiente.Nombre, x.EsPredeterminado))
+            .ToListAsync();
+    }
+
+    public sealed record AmbienteOpcion(int Id, string Nombre, bool EsPredeterminado);
 }

@@ -1,0 +1,163 @@
+@page
+@using Temperatura.Web.Domain.Enums
+@model Temperatura.Web.Pages.Registros.Historial.IndexModel
+@{
+    ViewData["Title"] = "Historial de registros";
+}
+
+<div class="mb-4">
+    <h1 class="h2 mb-1">Historial de registros</h1>
+    <p class="text-secondary mb-0">
+        @(Model.EsSupervisor ? "Consulta las mediciones de todos los ambientes." : "Consulta las mediciones de tus ambientes asignados.")
+    </p>
+</div>
+
+<form method="get" class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <div class="row g-3">
+            <div class="col-sm-6 col-xl-3">
+                <label asp-for="FechaDesde" class="form-label">Fecha operativa desde</label>
+                <input asp-for="FechaDesde" type="date" class="form-control" />
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <label asp-for="FechaHasta" class="form-label">Fecha operativa hasta</label>
+                <input asp-for="FechaHasta" type="date" class="form-control" />
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <label asp-for="AmbienteId" class="form-label">Ambiente</label>
+                <select asp-for="AmbienteId" class="form-select">
+                    <option value="">Todos</option>
+                    @foreach (var ambiente in Model.Ambientes)
+                    {
+                        <option value="@ambiente.Id">@ambiente.Nombre@(!ambiente.Activo ? " (inactivo)" : string.Empty)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <label asp-for="HorarioId" class="form-label">Horario</label>
+                <select asp-for="HorarioId" class="form-select">
+                    <option value="">Todos</option>
+                    @foreach (var horario in Model.Horarios)
+                    {
+                        <option value="@horario.Id">@horario.Nombre</option>
+                    }
+                </select>
+            </div>
+            <div class="col-sm-6 col-xl-4">
+                <label asp-for="UsuarioId" class="form-label">Usuario</label>
+                <select asp-for="UsuarioId" class="form-select">
+                    <option value="">Todos</option>
+                    @foreach (var usuario in Model.Usuarios)
+                    {
+                        <option value="@usuario.Id">@usuario.Nombre (@usuario.Email)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <label asp-for="Puntualidad" class="form-label">Puntualidad</label>
+                <select asp-for="Puntualidad" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="@EstadoPuntualidad.Puntual">Puntual</option>
+                    <option value="@EstadoPuntualidad.Tardio">Tardío</option>
+                </select>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <label asp-for="FueraDeRango" class="form-label">Estado del rango</label>
+                <select asp-for="FueraDeRango" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="false">Dentro de rango</option>
+                    <option value="true">Con valor fuera de rango</option>
+                </select>
+            </div>
+            <div class="col-xl-2 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary flex-fill">Filtrar</button>
+                <a asp-page="Index" class="btn btn-outline-secondary">Limpiar</a>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header">
+        <h2 class="card-title">@Model.TotalRegistros registro(s)</h2>
+    </div>
+    @if (Model.Registros.Count == 0)
+    {
+        <div class="card-body text-center py-5">
+            <div class="text-secondary">No se encontraron registros con los filtros seleccionados.</div>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-vcenter mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Fecha operativa</th>
+                        <th>Ambiente / horario</th>
+                        <th>Usuario</th>
+                        <th>Registro real</th>
+                        <th>Estado</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var registro in Model.Registros)
+                    {
+                        <tr>
+                            <td>@registro.FechaOperativa.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                <div class="fw-semibold">@registro.Ambiente</div>
+                                <div class="small text-secondary">Horario @registro.Horario · @registro.CantidadMediciones medición(es)</div>
+                            </td>
+                            <td>
+                                <div>@registro.Usuario</div>
+                                <div class="small text-secondary">@registro.Email</div>
+                            </td>
+                            <td>@registro.FechaHoraRegistro.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                <span class="badge @(registro.Puntualidad == EstadoPuntualidad.Puntual ? "text-bg-success" : "text-bg-warning")">
+                                    @(registro.Puntualidad == EstadoPuntualidad.Puntual ? "Puntual" : "Tardío")
+                                </span>
+                                <span class="badge @(registro.FueraDeRango ? "text-bg-danger" : "text-bg-azure")">
+                                    @(registro.FueraDeRango ? "Fuera de rango" : "Dentro de rango")
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <a asp-page="Detalle" asp-route-id="@registro.Id" class="btn btn-sm btn-outline-primary">Ver detalle</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.TotalPaginas > 1)
+        {
+            <div class="card-footer d-flex justify-content-between align-items-center">
+                <span class="text-secondary">Página @Model.Pagina de @Model.TotalPaginas</span>
+                <div class="btn-group">
+                    <a asp-page="Index" asp-all-route-data="@RouteDataForPage(Model.Pagina - 1)"
+                       class="btn btn-outline-secondary @(Model.Pagina == 1 ? "disabled" : string.Empty)">Anterior</a>
+                    <a asp-page="Index" asp-all-route-data="@RouteDataForPage(Model.Pagina + 1)"
+                       class="btn btn-outline-secondary @(Model.Pagina == Model.TotalPaginas ? "disabled" : string.Empty)">Siguiente</a>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@functions {
+    private Dictionary<string, string?> RouteDataForPage(int pagina) => new()
+    {
+        [nameof(Model.FechaDesde)] = Model.FechaDesde?.ToString("yyyy-MM-dd"),
+        [nameof(Model.FechaHasta)] = Model.FechaHasta?.ToString("yyyy-MM-dd"),
+        [nameof(Model.AmbienteId)] = Model.AmbienteId?.ToString(),
+        [nameof(Model.UsuarioId)] = Model.UsuarioId,
+        [nameof(Model.HorarioId)] = Model.HorarioId?.ToString(),
+        [nameof(Model.Puntualidad)] = Model.Puntualidad?.ToString(),
+        [nameof(Model.FueraDeRango)] = Model.FueraDeRango?.ToString(),
+        [nameof(Model.Pagina)] = pagina.ToString()
+    };
+}

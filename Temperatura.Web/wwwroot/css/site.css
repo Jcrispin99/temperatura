@@ -122,6 +122,55 @@ body {
   font-weight: 600;
 }
 
+.dashboard-percentage {
+  color: var(--tblr-primary);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.dashboard-metric {
+  margin: 0.35rem 0;
+  color: var(--tblr-body-color);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.dashboard-environment-selector {
+  width: min(100%, 23rem);
+}
+
+.schedule-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.schedule-status-completado {
+  color: var(--tblr-success);
+  background: var(--tblr-success-lt);
+}
+
+.schedule-status-pendiente {
+  color: var(--tblr-primary);
+  background: var(--tblr-primary-lt);
+}
+
+.schedule-status-vencido {
+  color: var(--tblr-danger);
+  background: var(--tblr-danger-lt);
+}
+
+.schedule-status-proximo {
+  color: var(--tblr-secondary);
+  background: var(--tblr-secondary-lt);
+}
+
 .table > :not(caption) > * > * {
   padding-top: 0.85rem;
   padding-bottom: 0.85rem;

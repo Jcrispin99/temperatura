@@ -1,37 +1,320 @@
-﻿@page
+@page
+@using Temperatura.Web.Domain.Enums
+@using Temperatura.Web.Services
 @model IndexModel
 @{
     ViewData["Title"] = "Inicio";
 }
 
-<div class="row align-items-center py-5 g-5">
-    <div class="col-lg-7">
-        <span class="badge rounded-pill text-bg-primary mb-3">Control diario</span>
-        <h1 class="display-5 fw-semibold">Registro de temperatura y humedad</h1>
-        <p class="lead text-secondary">
-            Registra manualmente las mediciones del ambiente dentro del horario asignado.
-        </p>
-        @if (User.Identity?.IsAuthenticated == true)
-        {
-            <a asp-page="/Registros/Nuevo" class="btn btn-primary btn-lg px-4">Registrar mediciones</a>
-        }
-        else
-        {
+@if (User.Identity?.IsAuthenticated != true)
+{
+    <div class="row align-items-center py-5 g-5">
+        <div class="col-lg-7">
+            <span class="badge rounded-pill text-bg-primary mb-3">Control diario</span>
+            <h1 class="display-5 fw-semibold">Registro de temperatura y humedad</h1>
+            <p class="lead text-secondary">
+                Registra manualmente las mediciones de cada ambiente y supervisa su cumplimiento diario.
+            </p>
             <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-primary btn-lg px-4">Ingresar</a>
-        }
-    </div>
-    <div class="col-lg-5">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body p-4">
-                <h2 class="h5">Horarios operativos</h2>
-                <p class="text-secondary mb-3">Cada captura abre 30 minutos antes y cierra una hora después.</p>
-                <div class="d-flex flex-wrap gap-2">
-                    <span class="schedule-chip">07:00</span>
-                    <span class="schedule-chip">12:00</span>
-                    <span class="schedule-chip">19:00</span>
-                    <span class="schedule-chip">00:00</span>
+        </div>
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h2 class="h5">Control centralizado</h2>
+                    <p class="text-secondary mb-0">
+                        Horarios, ventanas de captura y rangos configurables para cada ambiente.
+                    </p>
                 </div>
             </div>
         </div>
     </div>
-</div>
+}
+else if (Model.Ambientes.Count == 0)
+{
+    <div class="empty py-5">
+        <div class="empty-header">Sin ambientes</div>
+        <p class="empty-title">No tienes ambientes activos asignados</p>
+        <p class="empty-subtitle text-secondary">Solicita al supervisor que revise tu configuración.</p>
+    </div>
+}
+else if (Model.EsSupervisor)
+{
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
+        <div>
+            <span class="badge text-bg-primary mb-2">Supervisión diaria</span>
+            <h1 class="h2 mb-1">Avance de los ambientes</h1>
+            <p class="text-secondary mb-0">Estado actual de todas las rondas operativas.</p>
+        </div>
+        <a asp-page="/Registros/Nuevo" class="btn btn-primary">Registrar mediciones</a>
+    </div>
+
+    <div class="row g-4">
+        @foreach (var resumen in Model.Resumenes)
+        {
+            <div class="col-xl-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                            <div>
+                                <h2 class="h4 mb-1">@resumen.Ambiente</h2>
+                                <div class="text-secondary small">Día operativo @resumen.FechaOperativa.ToString("dd/MM/yyyy")</div>
+                            </div>
+                            <span class="dashboard-percentage">@resumen.PorcentajeAvance.ToString("0.##")%</span>
+                        </div>
+
+                        <div class="progress progress-sm mb-2" role="progressbar"
+                             aria-label="Avance de @resumen.Ambiente" aria-valuenow="@resumen.PorcentajeAvance"
+                             aria-valuemin="0" aria-valuemax="100">
+                            <div class="progress-bar" style="width: @resumen.PorcentajeAvance.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between small mb-3">
+                            <span>@resumen.RegistrosCompletados de @resumen.RegistrosEsperados completados</span>
+                            <span class="text-secondary">
+                                Cumplimiento actual:
+                                @(resumen.PorcentajeCumplimiento?.ToString("0.##") is string porcentaje ? $"{porcentaje}%" : "sin rondas exigibles")
+                            </span>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            @foreach (var horario in resumen.Horarios)
+                            {
+                                <span class="schedule-status schedule-status-@horario.Estado.ToString().ToLowerInvariant()">
+                                    @horario.Horario · @EtiquetaEstado(horario.Estado)
+                                </span>
+                            }
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="badge @(resumen.RegistrosTardios > 0 ? "text-bg-warning" : "text-bg-light")">
+                                @resumen.RegistrosTardios tardío(s)
+                            </span>
+                            <span class="badge @(resumen.RegistrosFueraDeRango > 0 ? "text-bg-danger" : "text-bg-light")">
+                                @resumen.RegistrosFueraDeRango con alerta(s)
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white d-flex justify-content-between gap-2">
+                        <a asp-page="/Registros/Historial/Index"
+                           asp-route-FechaDesde="@resumen.FechaOperativa.ToString("yyyy-MM-dd")"
+                           asp-route-FechaHasta="@resumen.FechaOperativa.ToString("yyyy-MM-dd")"
+                           asp-route-AmbienteId="@resumen.AmbienteId"
+                           class="btn btn-outline-secondary btn-sm">Ver historial</a>
+                        <a asp-page="/Registros/Nuevo" asp-route-AmbienteId="@resumen.AmbienteId"
+                           class="btn btn-outline-primary btn-sm">Registrar</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else if (Model.ResumenSeleccionado is { } resumen)
+{
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
+        <div>
+            <span class="badge text-bg-primary mb-2">Mi control diario</span>
+            <h1 class="h2 mb-1">@resumen.Ambiente</h1>
+            <p class="text-secondary mb-0">Día operativo @resumen.FechaOperativa.ToString("dd/MM/yyyy")</p>
+        </div>
+
+        @if (Model.Ambientes.Count > 1)
+        {
+            <form method="get" class="dashboard-environment-selector">
+                <label asp-for="AmbienteId" class="form-label">Ambiente</label>
+                <select asp-for="AmbienteId" class="form-select" onchange="this.form.submit()">
+                    @foreach (var ambiente in Model.Ambientes)
+                    {
+                        <option value="@ambiente.Id">
+                            @ambiente.Nombre@(ambiente.EsPredeterminado ? " (predeterminado)" : string.Empty)
+                        </option>
+                    }
+                </select>
+            </form>
+        }
+        else
+        {
+            <span class="badge text-bg-light">Ambiente predeterminado</span>
+        }
+    </div>
+
+    @if (resumen.ProximaVentana is { } proxima)
+    {
+        <div class="alert @(proxima.Estado == EstadoHorarioDiario.Pendiente ? "alert-success" : "alert-info") d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3" role="status">
+            <div>
+                <div class="fw-semibold">
+                    @(proxima.Estado == EstadoHorarioDiario.Pendiente
+                        ? $"El horario {proxima.Horario} está disponible"
+                        : $"Próxima apertura: horario {proxima.Horario} a las {proxima.Apertura:HH:mm}")
+                </div>
+                <div class="small">
+                    Ventana: @proxima.Apertura.ToString("dd/MM HH:mm") – @proxima.Cierre.ToString("dd/MM HH:mm")
+                </div>
+            </div>
+            @if (proxima.Estado == EstadoHorarioDiario.Pendiente)
+            {
+                <a asp-page="/Registros/Nuevo" asp-route-AmbienteId="@resumen.AmbienteId" class="btn btn-success">
+                    Registrar ahora
+                </a>
+            }
+        </div>
+    }
+
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-secondary small">Avance diario</div>
+                    <div class="dashboard-metric">@resumen.PorcentajeAvance.ToString("0.##")%</div>
+                    <div class="text-secondary">@resumen.RegistrosCompletados de @resumen.RegistrosEsperados registros</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-secondary small">Cumplimiento al momento</div>
+                    <div class="dashboard-metric">@(resumen.PorcentajeCumplimiento?.ToString("0.##") is string actual ? $"{actual}%" : "—")</div>
+                    <div class="text-secondary">@resumen.CumplidosExigibles de @resumen.HorariosExigibles exigibles</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-secondary small">Registros tardíos</div>
+                    <div class="dashboard-metric @(resumen.RegistrosTardios > 0 ? "text-warning" : string.Empty)">@resumen.RegistrosTardios</div>
+                    <div class="text-secondary">Cuentan como completados</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-secondary small">Alertas de rango</div>
+                    <div class="dashboard-metric @(resumen.RegistrosFueraDeRango > 0 ? "text-danger" : string.Empty)">@resumen.RegistrosFueraDeRango</div>
+                    <div class="text-secondary">Registros con alguna alerta</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-xl-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header">
+                    <h2 class="card-title">Horarios del día</h2>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-vcenter mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Horario</th>
+                                <th>Ventana</th>
+                                <th>Estado</th>
+                                <th>Resultado</th>
+                                <th class="text-end">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var horario in resumen.Horarios)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@horario.Horario</td>
+                                    <td class="small">
+                                        @horario.Apertura.ToString("dd/MM HH:mm") – @horario.Cierre.ToString("dd/MM HH:mm")
+                                    </td>
+                                    <td>
+                                        <span class="schedule-status schedule-status-@horario.Estado.ToString().ToLowerInvariant()">
+                                            @EtiquetaEstado(horario.Estado)
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (horario.RegistroId.HasValue)
+                                        {
+                                            <span>@(horario.Puntualidad == EstadoPuntualidad.Tardio ? "Tardío" : "Puntual")</span>
+                                            @if (horario.FueraDeRango)
+                                            {
+                                                <span class="badge text-bg-danger ms-1">Alerta</span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-secondary">Sin registro</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        @if (horario.RegistroId.HasValue)
+                                        {
+                                            <a asp-page="/Registros/Historial/Detalle" asp-route-id="@horario.RegistroId"
+                                               class="btn btn-sm btn-outline-secondary">Ver</a>
+                                        }
+                                        else if (horario.Estado == EstadoHorarioDiario.Pendiente)
+                                        {
+                                            <a asp-page="/Registros/Nuevo" asp-route-AmbienteId="@resumen.AmbienteId"
+                                               class="btn btn-sm btn-primary">Registrar</a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-secondary">—</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="card-title">Alertas recientes</h2>
+                    <a asp-page="/Registros/Historial/Index"
+                       asp-route-FechaDesde="@resumen.FechaOperativa.ToString("yyyy-MM-dd")"
+                       asp-route-FechaHasta="@resumen.FechaOperativa.ToString("yyyy-MM-dd")"
+                       asp-route-AmbienteId="@resumen.AmbienteId"
+                       asp-route-FueraDeRango="true" class="small">Ver historial</a>
+                </div>
+                @if (resumen.AlertasRecientes.Count == 0)
+                {
+                    <div class="card-body text-center py-5">
+                        <div class="text-success fw-semibold">Sin alertas de rango</div>
+                        <div class="text-secondary small mt-1">No hay valores fuera de los límites en este día.</div>
+                    </div>
+                }
+                else
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var alerta in resumen.AlertasRecientes)
+                        {
+                            <a asp-page="/Registros/Historial/Detalle" asp-route-id="@alerta.RegistroId"
+                               class="list-group-item list-group-item-action">
+                                <div class="d-flex justify-content-between gap-2">
+                                    <div class="fw-semibold">@alerta.Medicion</div>
+                                    <span class="badge text-bg-danger">
+                                        @(alerta.EstadoRango == EstadoRango.PorDebajo ? "Bajo" : "Alto")
+                                    </span>
+                                </div>
+                                <div class="small mt-1">
+                                    @alerta.Valor.ToString("0.##") @alerta.Unidad · rango
+                                    @alerta.LimiteMinimo.ToString("0.##")–@alerta.LimiteMaximo.ToString("0.##")
+                                </div>
+                                <div class="text-secondary small">Horario @alerta.Horario</div>
+                            </a>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@functions {
+    private static string EtiquetaEstado(EstadoHorarioDiario estado) => estado switch
+    {
+        EstadoHorarioDiario.Completado => "Completado",
+        EstadoHorarioDiario.Pendiente => "Pendiente",
+        EstadoHorarioDiario.Vencido => "Vencido",
+        _ => "Próximo"
+    };
+}
