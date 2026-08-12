@@ -1,0 +1,37 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Inicio";
+}
+
+<div class="row align-items-center py-5 g-5">
+    <div class="col-lg-7">
+        <span class="badge rounded-pill text-bg-primary mb-3">Control diario</span>
+        <h1 class="display-5 fw-semibold">Registro de temperatura y humedad</h1>
+        <p class="lead text-secondary">
+            Registra manualmente las mediciones del ambiente dentro del horario asignado.
+        </p>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <a asp-page="/Registros/Nuevo" class="btn btn-primary btn-lg px-4">Registrar mediciones</a>
+        }
+        else
+        {
+            <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-primary btn-lg px-4">Ingresar</a>
+        }
+    </div>
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <h2 class="h5">Horarios operativos</h2>
+                <p class="text-secondary mb-3">Cada captura abre 30 minutos antes y cierra una hora después.</p>
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="schedule-chip">07:00</span>
+                    <span class="schedule-chip">12:00</span>
+                    <span class="schedule-chip">19:00</span>
+                    <span class="schedule-chip">00:00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

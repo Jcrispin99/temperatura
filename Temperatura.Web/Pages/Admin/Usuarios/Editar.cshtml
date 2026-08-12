@@ -1,0 +1,120 @@
+@page "{id}"
+@model Temperatura.Web.Pages.Admin.Usuarios.EditarModel
+@{
+    ViewData["Title"] = "Editar usuario";
+}
+
+<div class="row justify-content-center">
+    <div class="col-xl-8 col-lg-9">
+        <div class="mb-4">
+            <a asp-page="Index" class="text-decoration-none">← Volver a usuarios</a>
+            <h1 class="h2 mt-2 mb-1">Editar usuario</h1>
+            <p class="text-secondary">Actualiza sus datos, acceso y ambientes.</p>
+        </div>
+
+        <form method="post" class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                <input asp-for="Input.Id" type="hidden" />
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Input.Nombre" class="form-label">Nombre</label>
+                        <input asp-for="Input.Nombre" class="form-control" />
+                        <span asp-validation-for="Input.Nombre" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Input.Email" class="form-label">Correo</label>
+                        <input asp-for="Input.Email" class="form-control" />
+                        <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Input.Rol" class="form-label">Rol</label>
+                        <select asp-for="Input.Rol" class="form-select" id="role-select">
+                            <option value="Registrador">Registrador</option>
+                            <option value="Supervisor">Supervisor</option>
+                        </select>
+                        <span asp-validation-for="Input.Rol" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div class="form-check form-switch mb-2">
+                            <input asp-for="Input.Activo" class="form-check-input" />
+                            <label asp-for="Input.Activo" class="form-check-label">Usuario activo</label>
+                            <span asp-validation-for="Input.Activo" class="text-danger small d-block"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <section class="mt-4" id="environment-section">
+                    <h2 class="h5">Ambientes</h2>
+                    <p class="text-secondary small">Marca los ambientes permitidos y elige uno como predeterminado.</p>
+                    <span asp-validation-for="Input.AmbienteIds" class="text-danger small d-block"></span>
+                    <span asp-validation-for="Input.AmbientePredeterminadoId" class="text-danger small d-block"></span>
+                    <div class="table-responsive border rounded">
+                        <table class="table align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Asignar</th>
+                                    <th>Ambiente</th>
+                                    <th>Predeterminado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var ambiente in Model.Ambientes)
+                                {
+                                    <tr>
+                                        <td>
+                                            <input class="form-check-input" type="checkbox"
+                                                   name="Input.AmbienteIds" value="@ambiente.Id"
+                                                   checked="@Model.Input.AmbienteIds.Contains(ambiente.Id)" />
+                                        </td>
+                                        <td>@ambiente.Nombre</td>
+                                        <td>
+                                            <input class="form-check-input" type="radio"
+                                                   name="Input.AmbientePredeterminadoId" value="@ambiente.Id"
+                                                   checked="@(Model.Input.AmbientePredeterminadoId == ambiente.Id)" />
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="mt-4 pt-4 border-top">
+                    <h2 class="h5">Cambiar contraseña</h2>
+                    <p class="text-secondary small">Déjala vacía para conservar la contraseña actual.</p>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Input.NuevaContrasena" class="form-label">Nueva contraseña</label>
+                            <input asp-for="Input.NuevaContrasena" class="form-control" autocomplete="new-password" />
+                            <span asp-validation-for="Input.NuevaContrasena" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.ConfirmarContrasena" class="form-label">Confirmar contraseña</label>
+                            <input asp-for="Input.ConfirmarContrasena" class="form-control" autocomplete="new-password" />
+                            <span asp-validation-for="Input.ConfirmarContrasena" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            <div class="card-footer bg-white d-flex justify-content-end gap-2 p-3">
+                <a asp-page="Index" class="btn btn-outline-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Guardar cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const roleSelect = document.getElementById('role-select');
+        const environmentSection = document.getElementById('environment-section');
+        const updateEnvironmentVisibility = () => {
+            environmentSection.hidden = roleSelect.value === 'Supervisor';
+        };
+        roleSelect.addEventListener('change', updateEnvironmentVisibility);
+        updateEnvironmentVisibility();
+    </script>
+}

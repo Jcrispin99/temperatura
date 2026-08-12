@@ -1,0 +1,132 @@
+@page "{id:int}"
+@model Temperatura.Web.Pages.Admin.Ambientes.EditarModel
+@{
+    ViewData["Title"] = "Editar ambiente";
+}
+
+<div class="row justify-content-center">
+    <div class="col-xl-9 col-lg-10">
+        <div class="mb-4">
+            <a asp-page="Index" class="text-decoration-none">← Volver a ambientes</a>
+            <h1 class="h2 mt-2 mb-1">Editar ambiente</h1>
+            <p class="text-secondary">Configura el ambiente y las mediciones que debe registrar.</p>
+        </div>
+
+        @if (TempData["MensajeExito"] is string mensaje)
+        {
+            <div class="alert alert-success" role="alert">@mensaje</div>
+        }
+
+        <form method="post" class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                <input asp-for="Input.Id" type="hidden" />
+
+                <section>
+                    <h2 class="h4 mb-3">Datos generales</h2>
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-8">
+                            <label asp-for="Input.Nombre" class="form-label">Nombre</label>
+                            <input asp-for="Input.Nombre" class="form-control" />
+                            <span asp-validation-for="Input.Nombre" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch mb-2">
+                                <input asp-for="Input.Activo" class="form-check-input" />
+                                <label asp-for="Input.Activo" class="form-check-label">Ambiente activo</label>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="form-text mb-0">
+                        Al desactivarlo dejará de aparecer para nuevas capturas y asignaciones; su historial se conservará.
+                    </p>
+                </section>
+
+                <section class="mt-4 pt-4 border-top">
+                    <div class="mb-3">
+                        <h2 class="h4 mb-1">Mediciones y rangos</h2>
+                        <p class="text-secondary mb-0">
+                            Habilita lo que se medirá en este ambiente y define sus límites permitidos.
+                        </p>
+                    </div>
+
+                    <div class="table-responsive border rounded">
+                        <table class="table table-vcenter mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Habilitada</th>
+                                    <th>Medición</th>
+                                    <th>Rango mínimo</th>
+                                    <th>Rango máximo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (var indice = 0; indice < Model.Input.Mediciones.Count; indice++)
+                                {
+                                    var medicion = Model.Input.Mediciones[indice];
+                                    <tr class="measurement-config-row">
+                                        <td>
+                                            <input asp-for="Input.Mediciones[indice].TipoMedicionId" type="hidden" />
+                                            <input asp-for="Input.Mediciones[indice].Habilitada"
+                                                   class="form-check-input measurement-toggle" />
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold">@medicion.Nombre</div>
+                                            <div class="small text-secondary">Unidad: @medicion.Unidad</div>
+                                        </td>
+                                        <td>
+                                            <div class="input-group">
+                                                <input asp-for="Input.Mediciones[indice].RangoMinimo"
+                                                       class="form-control measurement-range"
+                                                       inputmode="decimal" />
+                                                <span class="input-group-text">@medicion.Unidad</span>
+                                            </div>
+                                            <span asp-validation-for="Input.Mediciones[indice].RangoMinimo"
+                                                  class="text-danger small"></span>
+                                        </td>
+                                        <td>
+                                            <div class="input-group">
+                                                <input asp-for="Input.Mediciones[indice].RangoMaximo"
+                                                       class="form-control measurement-range"
+                                                       inputmode="decimal" />
+                                                <span class="input-group-text">@medicion.Unidad</span>
+                                            </div>
+                                            <span asp-validation-for="Input.Mediciones[indice].RangoMaximo"
+                                                  class="text-danger small"></span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="alert alert-info mt-3 mb-0" role="note">
+                        Los cambios de rango conservan la configuración anterior para el historial. Los registros ya guardados no cambian.
+                    </div>
+                </section>
+            </div>
+            <div class="card-footer bg-white d-flex justify-content-end gap-2 p-3">
+                <a asp-page="Index" class="btn btn-outline-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Guardar cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const updateMeasurementRow = (row) => {
+            const enabled = row.querySelector('.measurement-toggle').checked;
+            row.querySelectorAll('.measurement-range').forEach(input => {
+                input.disabled = !enabled;
+            });
+            row.classList.toggle('text-secondary', !enabled);
+        };
+
+        document.querySelectorAll('.measurement-config-row').forEach(row => {
+            row.querySelector('.measurement-toggle').addEventListener('change', () => updateMeasurementRow(row));
+            updateMeasurementRow(row);
+        });
+    </script>
+}

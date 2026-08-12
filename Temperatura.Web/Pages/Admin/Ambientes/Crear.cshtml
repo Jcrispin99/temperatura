@@ -1,0 +1,32 @@
+@page
+@model Temperatura.Web.Pages.Admin.Ambientes.CrearModel
+@{
+    ViewData["Title"] = "Crear ambiente";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="mb-4">
+            <a asp-page="Index" class="text-decoration-none">← Volver a ambientes</a>
+            <h1 class="h2 mt-2 mb-1">Crear ambiente</h1>
+            <p class="text-secondary">Después podrás asignarle usuarios, mediciones y horarios.</p>
+        </div>
+
+        <form method="post" class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                <label asp-for="Input.Nombre" class="form-label">Nombre</label>
+                <input asp-for="Input.Nombre" class="form-control" autofocus />
+                <span asp-validation-for="Input.Nombre" class="text-danger small"></span>
+            </div>
+            <div class="card-footer bg-white d-flex justify-content-end gap-2 p-3">
+                <a asp-page="Index" class="btn btn-outline-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Crear ambiente</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

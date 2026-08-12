@@ -1,0 +1,137 @@
+@{
+    var rutaActual = Context.Request.Path.Value ?? string.Empty;
+    var enInicio = rutaActual == "/" || rutaActual.Equals("/Index", StringComparison.OrdinalIgnoreCase);
+    var enRegistros = rutaActual.StartsWith("/Registros", StringComparison.OrdinalIgnoreCase);
+    var enUsuarios = rutaActual.StartsWith("/Admin/Usuarios", StringComparison.OrdinalIgnoreCase);
+    var enAmbientes = rutaActual.StartsWith("/Admin/Ambientes", StringComparison.OrdinalIgnoreCase);
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light" />
+    <title>@ViewData["Title"] - Control ambiental</title>
+    <script src="~/lib/tabler/js/tabler-theme.min.js"></script>
+    <link rel="stylesheet" href="~/lib/tabler/css/tabler.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Temperatura.Web.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="page">
+        <aside class="navbar navbar-vertical navbar-expand-lg app-sidebar" data-bs-theme="dark">
+            <div class="container-fluid">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu"
+                        aria-controls="sidebar-menu" aria-expanded="false" aria-label="Abrir navegación">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <h1 class="navbar-brand navbar-brand-autodark">
+                    <a asp-area="" asp-page="/Index" class="brand-link">
+                        <span class="brand-symbol" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 4a2 2 0 0 0-4 0v9.5a4 4 0 1 0 4 0z" />
+                                <path d="M10 9h4" />
+                            </svg>
+                        </span>
+                        <span>
+                            <span class="brand-title">Control ambiental</span>
+                            <span class="brand-subtitle">Temperatura y humedad</span>
+                        </span>
+                    </a>
+                </h1>
+
+                <div class="collapse navbar-collapse" id="sidebar-menu">
+                    <ul class="navbar-nav pt-lg-3">
+                        <li class="nav-item @(enInicio ? "active" : string.Empty)">
+                            <a class="nav-link" asp-area="" asp-page="/Index">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block" aria-hidden="true">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M3 12l9-9l9 9" />
+                                        <path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-10" />
+                                        <path d="M9 21v-6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v6" />
+                                    </svg>
+                                </span>
+                                <span class="nav-link-title">Inicio</span>
+                            </a>
+                        </li>
+
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item @(enRegistros ? "active" : string.Empty)">
+                                <a class="nav-link" asp-area="" asp-page="/Registros/Nuevo">
+                                    <span class="nav-link-icon d-md-none d-lg-inline-block" aria-hidden="true">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M14 4a2 2 0 0 0-4 0v9.5a4 4 0 1 0 4 0z" />
+                                            <path d="M10 9h4" />
+                                        </svg>
+                                    </span>
+                                    <span class="nav-link-title">Registrar mediciones</span>
+                                </a>
+                            </li>
+
+                            @if (User.IsInRole("Supervisor"))
+                            {
+                                <li class="nav-item mt-lg-3">
+                                    <div class="nav-section-label">Administración</div>
+                                </li>
+                                <li class="nav-item @(enUsuarios ? "active" : string.Empty)">
+                                    <a class="nav-link" asp-area="" asp-page="/Admin/Usuarios/Index">
+                                        <span class="nav-link-icon d-md-none d-lg-inline-block" aria-hidden="true">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M9 11a4 4 0 1 0 0-8a4 4 0 0 0 0 8" />
+                                                <path d="M17 13a3 3 0 1 0 0-6" />
+                                                <path d="M3 21v-2a6 6 0 0 1 12 0v2" />
+                                                <path d="M16 19h6" />
+                                            </svg>
+                                        </span>
+                                        <span class="nav-link-title">Usuarios</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item @(enAmbientes ? "active" : string.Empty)">
+                                    <a class="nav-link" asp-area="" asp-page="/Admin/Ambientes/Index">
+                                        <span class="nav-link-icon d-md-none d-lg-inline-block" aria-hidden="true">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M3 21h18" />
+                                                <path d="M6 21v-16a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16" />
+                                                <path d="M9 7h1" /><path d="M9 11h1" /><path d="M9 15h1" />
+                                                <path d="M14 7h1" /><path d="M14 11h1" /><path d="M14 15h1" />
+                                            </svg>
+                                        </span>
+                                        <span class="nav-link-title">Ambientes</span>
+                                    </a>
+                                </li>
+                            }
+                        }
+                    </ul>
+
+                    <div class="sidebar-account mt-auto">
+                        <partial name="_LoginPartial" />
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <div class="page-wrapper">
+            <div class="page-body">
+                <div class="container-xl py-4 py-lg-5">
+                    <main role="main">
+                        @RenderBody()
+                    </main>
+                </div>
+            </div>
+
+            <footer class="footer footer-transparent d-print-none">
+                <div class="container-xl">
+                    <div class="text-secondary">&copy; 2026 Control ambiental</div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/tabler/js/tabler.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,136 @@
+@page
+@using Temperatura.Web.Domain.Enums
+@model Temperatura.Web.Pages.Registros.NuevoModel
+@{
+    ViewData["Title"] = "Registrar mediciones";
+}
+
+<div class="row justify-content-center">
+    <div class="col-xl-8 col-lg-9">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-4">
+            <div>
+                <h1 class="h2 mb-1">Registrar mediciones</h1>
+                <p class="text-secondary mb-0">Transcribe los valores mostrados por el termohigrómetro.</p>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.MensajeExito))
+        {
+            <div class="alert alert-success" role="alert">@Model.MensajeExito</div>
+        }
+
+        @if (Model.Ambientes.Count > 1)
+        {
+            <form method="get" class="card shadow-sm border-0 mb-4">
+                <div class="card-body">
+                    <label asp-for="AmbienteId" class="form-label fw-semibold">Ambiente</label>
+                    <div class="d-flex gap-2">
+                        <select asp-for="AmbienteId" class="form-select" onchange="this.form.submit()">
+                            @foreach (var ambiente in Model.Ambientes)
+                            {
+                                <option value="@ambiente.Id">
+                                    @ambiente.Nombre@(ambiente.EsPredeterminado ? " (predeterminado)" : string.Empty)
+                                </option>
+                            }
+                        </select>
+                        <noscript><button type="submit" class="btn btn-outline-primary">Cambiar</button></noscript>
+                    </div>
+                </div>
+            </form>
+        }
+        else if (Model.Ambientes.Count == 1)
+        {
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body">
+                    <div class="text-secondary small">Ambiente asignado</div>
+                    <div class="fw-semibold fs-5">@Model.Ambientes[0].Nombre</div>
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.MensajeSinVentana))
+        {
+            <div class="alert alert-info" role="status">
+                <h2 class="h6">Sin captura disponible</h2>
+                <p class="mb-0">@Model.MensajeSinVentana</p>
+            </div>
+        }
+
+        @if (Model.HorarioSeleccionado is not null && Model.Mediciones.Count > 0)
+        {
+            <form method="post" class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <div>
+                            <span class="text-secondary small">@Model.AmbienteSeleccionado</span>
+                            <h2 class="h5 mb-0">Horario @Model.HorarioSeleccionado.Nombre</h2>
+                        </div>
+                        @if (Model.HorarioSeleccionado.Puntualidad == EstadoPuntualidad.Tardio)
+                        {
+                            <span class="badge text-bg-warning">Registro tardío</span>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-success">Registro puntual</span>
+                        }
+                    </div>
+                    <div class="small text-secondary mt-2">
+                        Día operativo: @Model.HorarioSeleccionado.FechaOperativa.ToString("dd/MM/yyyy") ·
+                        Ventana hasta @Model.HorarioSeleccionado.Cierre.ToString("HH:mm")
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                    <input asp-for="AmbienteId" type="hidden" />
+                    <input asp-for="HorarioId" type="hidden" />
+
+                    <div class="row g-4">
+                        @for (var indice = 0; indice < Model.Mediciones.Count; indice++)
+                        {
+                            var medicion = Model.Mediciones[indice];
+                            var paso = medicion.DecimalesPermitidos == 0
+                                ? "1"
+                                : $"0.{new string('0', medicion.DecimalesPermitidos - 1)}1";
+
+                            <div class="col-md-6">
+                                <input asp-for="Mediciones[indice].AmbienteMedicionId" type="hidden" />
+                                <div class="measurement-field h-100">
+                                    <label asp-for="Mediciones[indice].Valor" class="form-label fw-semibold">
+                                        @medicion.Nombre
+                                    </label>
+                                    <div class="input-group input-group-lg">
+                                        <input asp-for="Mediciones[indice].Valor"
+                                               class="form-control"
+                                               inputmode="decimal"
+                                               step="@paso"
+                                               autocomplete="off" />
+                                        <span class="input-group-text">@medicion.Unidad</span>
+                                    </div>
+                                    <div class="form-text">
+                                        Rango configurado: @medicion.RangoMinimo.ToString("0.##") a @medicion.RangoMaximo.ToString("0.##") @medicion.Unidad
+                                    </div>
+                                    <span asp-validation-for="Mediciones[indice].Valor" class="text-danger small"></span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="card-footer bg-white d-flex justify-content-end p-3">
+                    <button type="submit" class="btn btn-primary btn-lg px-4">
+                        Confirmar registro
+                    </button>
+                </div>
+            </form>
+
+            <p class="small text-secondary mt-3">
+                Una vez confirmado, el registro no podrá modificarse ni eliminarse.
+            </p>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
