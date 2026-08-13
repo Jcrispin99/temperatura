@@ -24,6 +24,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
     public DbSet<DetalleRegistro> DetallesRegistro => Set<DetalleRegistro>();
 
+    public DbSet<ConfiguracionSmtp> ConfiguracionesSmtp => Set<ConfiguracionSmtp>();
+
+    public DbSet<AlertaRegistroOmitido> AlertasRegistrosOmitidos => Set<AlertaRegistroOmitido>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -33,6 +37,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         ConfigurarMediciones(builder);
         ConfigurarHorarios(builder);
         ConfigurarRegistros(builder);
+        ConfigurarSmtp(builder);
+        ConfigurarAlertasRegistrosOmitidos(builder);
         CargarDatosIniciales(builder);
     }
 
@@ -229,6 +235,51 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.HasOne(x => x.TipoMedicion)
                 .WithMany(x => x.Detalles)
                 .HasForeignKey(x => x.TipoMedicionId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+    }
+
+    private static void ConfigurarSmtp(ModelBuilder builder)
+    {
+        builder.Entity<ConfiguracionSmtp>(entity =>
+        {
+            entity.ToTable("ConfiguracionesSmtp", table =>
+            {
+                table.HasCheckConstraint(
+                    "CK_ConfiguracionesSmtp_RegistroUnico",
+                    "[Id] = 1");
+                table.HasCheckConstraint(
+                    "CK_ConfiguracionesSmtp_Puerto",
+                    "[Puerto] BETWEEN 1 AND 65535");
+            });
+
+            entity.Property(x => x.Servidor).HasMaxLength(255).IsRequired();
+            entity.Property(x => x.CorreoRemitente).HasMaxLength(256).IsRequired();
+            entity.Property(x => x.NombreRemitente).HasMaxLength(150).IsRequired();
+            entity.Property(x => x.Usuario).HasMaxLength(256).IsRequired();
+            entity.Property(x => x.SecretoProtegido).HasMaxLength(2000).IsRequired();
+            entity.Property(x => x.ActualizadoPorUsuarioId).HasMaxLength(450).IsRequired();
+        });
+    }
+
+    private static void ConfigurarAlertasRegistrosOmitidos(ModelBuilder builder)
+    {
+        builder.Entity<AlertaRegistroOmitido>(entity =>
+        {
+            entity.ToTable("AlertasRegistrosOmitidos");
+            entity.Property(x => x.Estado).HasConversion<string>().HasMaxLength(20);
+            entity.Property(x => x.UltimoError).HasMaxLength(1000);
+            entity.HasIndex(x => new { x.FechaOperativa, x.AmbienteId, x.HorarioId }).IsUnique();
+            entity.HasIndex(x => x.Estado);
+
+            entity.HasOne(x => x.Ambiente)
+                .WithMany()
+                .HasForeignKey(x => x.AmbienteId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.Horario)
+                .WithMany()
+                .HasForeignKey(x => x.HorarioId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }

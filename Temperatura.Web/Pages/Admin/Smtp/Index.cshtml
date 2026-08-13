@@ -1,0 +1,104 @@
+@page
+@model Temperatura.Web.Pages.Admin.Smtp.IndexModel
+@{
+    ViewData["Title"] = "Correo SMTP";
+}
+
+<div class="mb-4">
+    <h1 class="h2 mb-1">Correo SMTP</h1>
+    <p class="text-secondary mb-0">Configura la cuenta de Gmail que enviará las alertas del sistema.</p>
+</div>
+
+@if (TempData["MensajeExito"] is string mensaje)
+{
+    <div class="alert alert-success" role="alert">@mensaje</div>
+}
+@if (TempData["MensajeError"] is string error)
+{
+    <div class="alert alert-danger" role="alert">@error</div>
+}
+
+<div class="row justify-content-center">
+    <div class="col-xl-8">
+        <form method="post" class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="alert alert-info" role="note">
+                    Usa una <strong>contraseña de aplicación de Google</strong>, no la contraseña normal de Gmail.
+                    El valor se guarda cifrado y nunca se vuelve a mostrar.
+                </div>
+
+                <div class="form-check form-switch mb-4">
+                    <input asp-for="Input.Activo" class="form-check-input" />
+                    <label asp-for="Input.Activo" class="form-check-label">Configuración activa</label>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label asp-for="Input.Servidor" class="form-label">Servidor SMTP</label>
+                        <input asp-for="Input.Servidor" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="Input.Servidor" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Input.Puerto" class="form-label">Puerto</label>
+                        <input asp-for="Input.Puerto" class="form-control" />
+                        <span asp-validation-for="Input.Puerto" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input asp-for="Input.UsarTls" class="form-check-input" />
+                            <label asp-for="Input.UsarTls" class="form-check-label">Usar conexión segura TLS</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Input.CorreoRemitente" class="form-label">Correo remitente</label>
+                        <input asp-for="Input.CorreoRemitente" class="form-control" autocomplete="email" />
+                        <span asp-validation-for="Input.CorreoRemitente" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Input.NombreRemitente" class="form-label">Nombre del remitente</label>
+                        <input asp-for="Input.NombreRemitente" class="form-control" autocomplete="organization" />
+                        <span asp-validation-for="Input.NombreRemitente" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Input.Usuario" class="form-label">Usuario de Gmail</label>
+                        <input asp-for="Input.Usuario" class="form-control" autocomplete="username" />
+                        <span asp-validation-for="Input.Usuario" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Input.Secreto" class="form-label">
+                            Contraseña de aplicación de Google
+                        </label>
+                        <input type="password" id="Input_Secreto" name="Input.Secreto" value=""
+                               class="form-control" autocomplete="new-password"
+                               placeholder="@(Model.TieneSecretoConfigurado ? "Configurada; deja vacío para conservarla" : "16 caracteres de Google")" />
+                        <span asp-validation-for="Input.Secreto" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                @if (Model.FechaActualizacion.HasValue)
+                {
+                    <div class="text-secondary small mt-4">
+                        Última actualización: @Model.FechaActualizacion.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                    </div>
+                }
+            </div>
+            <div class="card-footer bg-transparent d-flex justify-content-between gap-3">
+                <button type="submit" asp-page-handler="Probar" formnovalidate
+                        class="btn btn-outline-primary"
+                        disabled="@(!Model.TieneSecretoConfigurado ? "disabled" : null)">
+                    Enviar correo de prueba
+                </button>
+                <button type="submit" class="btn btn-primary">Guardar configuración</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Temperatura.Web.Data;
 
@@ -11,9 +12,11 @@ using Temperatura.Web.Data;
 namespace Temperatura.Web.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260812210129_AddConfiguracionSmtp")]
+    partial class AddConfiguracionSmtp
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -173,58 +176,6 @@ namespace Temperatura.Web.Data.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("Temperatura.Web.Domain.AlertaRegistroOmitido", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<int>("AmbienteId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Estado")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<DateTimeOffset>("FechaHoraCierre")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateTimeOffset>("FechaHoraDeteccion")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateTimeOffset?>("FechaHoraEnvio")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateOnly>("FechaOperativa")
-                        .HasColumnType("date");
-
-                    b.Property<int>("HorarioId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("IntentosEnvio")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UltimoError")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AmbienteId");
-
-                    b.HasIndex("Estado");
-
-                    b.HasIndex("HorarioId");
-
-                    b.HasIndex("FechaOperativa", "AmbienteId", "HorarioId")
-                        .IsUnique();
-
-                    b.ToTable("AlertasRegistrosOmitidos", (string)null);
                 });
 
             modelBuilder.Entity("Temperatura.Web.Domain.Ambiente", b =>
@@ -1129,25 +1080,6 @@ namespace Temperatura.Web.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("Temperatura.Web.Domain.AlertaRegistroOmitido", b =>
-                {
-                    b.HasOne("Temperatura.Web.Domain.Ambiente", "Ambiente")
-                        .WithMany()
-                        .HasForeignKey("AmbienteId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Temperatura.Web.Domain.Horario", "Horario")
-                        .WithMany()
-                        .HasForeignKey("HorarioId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Ambiente");
-
-                    b.Navigation("Horario");
                 });
 
             modelBuilder.Entity("Temperatura.Web.Domain.AmbienteHorario", b =>

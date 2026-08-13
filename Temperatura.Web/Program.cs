@@ -28,6 +28,11 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IVentanaRegistroService, VentanaRegistroService>();
 builder.Services.AddScoped<IAvanceDiarioService, AvanceDiarioService>();
 builder.Services.AddScoped<IResumenAvanceService, ResumenAvanceService>();
+builder.Services.AddScoped<IProtectorSecretoSmtp, ProtectorSecretoSmtp>();
+builder.Services.AddScoped<ICorreoSmtpSender, CorreoSmtpSender>();
+builder.Services.AddScoped<IAlertaRegistroOmitidoService, AlertaRegistroOmitidoService>();
+builder.Services.AddScoped<IProgramadorRevisionOmisiones, ProgramadorRevisionOmisiones>();
+builder.Services.AddHostedService<AlertaRegistroOmitidoWorker>();
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("RegistroPublicoDeshabilitado", policy =>
