@@ -27,6 +27,7 @@ builder.Services.Configure<SecurityStampValidatorOptions>(options =>
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<IVentanaRegistroService, VentanaRegistroService>();
 builder.Services.AddScoped<IAvanceDiarioService, AvanceDiarioService>();
+builder.Services.AddScoped<IResumenAvanceService, ResumenAvanceService>();
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("RegistroPublicoDeshabilitado", policy =>

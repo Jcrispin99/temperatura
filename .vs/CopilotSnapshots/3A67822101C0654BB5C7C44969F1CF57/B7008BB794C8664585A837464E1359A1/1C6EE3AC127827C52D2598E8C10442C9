@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -11,34 +11,18 @@ namespace Temperatura.Web.Pages;
 public class IndexModel(
     ApplicationDbContext context,
     UserManager<ApplicationUser> userManager,
-    IAvanceDiarioService avanceDiarioService,
-    IResumenAvanceService resumenAvanceService,
-    IVentanaRegistroService ventanaRegistroService) : PageModel
+    IAvanceDiarioService avanceDiarioService) : PageModel
 {
     private readonly ApplicationDbContext _context = context;
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly IAvanceDiarioService _avanceDiarioService = avanceDiarioService;
-    private readonly IResumenAvanceService _resumenAvanceService = resumenAvanceService;
-    private readonly IVentanaRegistroService _ventanaRegistroService = ventanaRegistroService;
 
     [BindProperty(SupportsGet = true)]
     public int? AmbienteId { get; set; }
 
-    [BindProperty(SupportsGet = true)]
-    public PeriodoDashboard Periodo { get; set; } = PeriodoDashboard.Diario;
-
-    [BindProperty(SupportsGet = true)]
-    public DateOnly? Fecha { get; set; }
-
-    [BindProperty(SupportsGet = true)]
-    public int[]? AmbienteIds { get; set; }
-
     public IReadOnlyList<AmbienteOpcion> Ambientes { get; private set; } = [];
     public IReadOnlyList<ResumenAvanceAmbiente> Resumenes { get; private set; } = [];
     public ResumenAvanceAmbiente? ResumenSeleccionado => Resumenes.FirstOrDefault();
-    public ResumenAvancePeriodo? ResumenPeriodo { get; private set; }
-    public DateOnly FechaDesde { get; private set; }
-    public DateOnly FechaHasta { get; private set; }
     public bool EsSupervisor => User.IsInRole("Supervisor");
 
     public async Task OnGetAsync()
@@ -57,25 +41,8 @@ public class IndexModel(
 
         if (EsSupervisor)
         {
-            var hoy = DateOnly.FromDateTime(_ventanaRegistroService.ObtenerAhoraLocal().DateTime);
-            Fecha ??= hoy;
-            (FechaDesde, FechaHasta) = ObtenerRango(Periodo, Fecha.Value, hoy);
-
-            var idsDisponibles = Ambientes.Select(x => x.Id).ToHashSet();
-            var idsSeleccionados = AmbienteIds?
-                .Where(idsDisponibles.Contains)
-                .Distinct()
-                .ToArray() ?? [];
-            if (idsSeleccionados.Length == 0)
-            {
-                idsSeleccionados = idsDisponibles.ToArray();
-            }
-
-            AmbienteIds = idsSeleccionados;
-            ResumenPeriodo = await _resumenAvanceService.ObtenerAsync(
-                idsSeleccionados,
-                FechaDesde,
-                FechaHasta,
+            Resumenes = await _avanceDiarioService.ObtenerAvanceActualAsync(
+                Ambientes.Select(x => x.Id).ToArray(),
                 HttpContext.RequestAborted);
             return;
         }
@@ -111,27 +78,6 @@ public class IndexModel(
             .ThenBy(x => x.Ambiente.Nombre)
             .Select(x => new AmbienteOpcion(x.AmbienteId, x.Ambiente.Nombre, x.EsPredeterminado))
             .ToListAsync();
-    }
-
-    private static (DateOnly Desde, DateOnly Hasta) ObtenerRango(
-        PeriodoDashboard periodo,
-        DateOnly fechaReferencia,
-        DateOnly hoy)
-    {
-        var desde = periodo switch
-        {
-            PeriodoDashboard.Semanal => fechaReferencia.AddDays(-(((int)fechaReferencia.DayOfWeek + 6) % 7)),
-            PeriodoDashboard.Mensual => new DateOnly(fechaReferencia.Year, fechaReferencia.Month, 1),
-            _ => fechaReferencia
-        };
-        var hasta = periodo switch
-        {
-            PeriodoDashboard.Semanal => desde.AddDays(6),
-            PeriodoDashboard.Mensual => desde.AddMonths(1).AddDays(-1),
-            _ => desde
-        };
-
-        return (desde, hasta > hoy ? hoy : hasta);
     }
 
     public sealed record AmbienteOpcion(int Id, string Nombre, bool EsPredeterminado);

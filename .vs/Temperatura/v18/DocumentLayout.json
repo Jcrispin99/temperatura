@@ -1,0 +1,221 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\gen-tya-cmprocesosHO\\source\\repos\\temperatura\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\gen-tya-cmprocesosHO\\.copilot\\plans\\plan-supervisor-dashboard-by-environment-and-period.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}|MarkdownSecurePreview"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5671B6BF-C32F-4454-8542-F6CC3BB92DC5}|Temperatura.Web\\Temperatura.Web.csproj|c:\\users\\gen-tya-cmprocesosho\\source\\repos\\temperatura\\temperatura.web\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{5671B6BF-C32F-4454-8542-F6CC3BB92DC5}|Temperatura.Web\\Temperatura.Web.csproj|solutionrelative:temperatura.web\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5671B6BF-C32F-4454-8542-F6CC3BB92DC5}|Temperatura.Web\\Temperatura.Web.csproj|c:\\users\\gen-tya-cmprocesosho\\source\\repos\\temperatura\\temperatura.web\\temperatura.web.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{5671B6BF-C32F-4454-8542-F6CC3BB92DC5}|Temperatura.Web\\Temperatura.Web.csproj|solutionrelative:temperatura.web\\temperatura.web.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5671B6BF-C32F-4454-8542-F6CC3BB92DC5}|Temperatura.Web\\Temperatura.Web.csproj|c:\\users\\gen-tya-cmprocesosho\\source\\repos\\temperatura\\temperatura.web\\services\\tipoperiodo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5671B6BF-C32F-4454-8542-F6CC3BB92DC5}|Temperatura.Web\\Temperatura.Web.csproj|solutionrelative:temperatura.web\\services\\tipoperiodo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5671B6BF-C32F-4454-8542-F6CC3BB92DC5}|Temperatura.Web\\Temperatura.Web.csproj|c:\\users\\gen-tya-cmprocesosho\\source\\repos\\temperatura\\temperatura.web\\services\\reportecumplimientoperiodo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5671B6BF-C32F-4454-8542-F6CC3BB92DC5}|Temperatura.Web\\Temperatura.Web.csproj|solutionrelative:temperatura.web\\services\\reportecumplimientoperiodo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5671B6BF-C32F-4454-8542-F6CC3BB92DC5}|Temperatura.Web\\Temperatura.Web.csproj|c:\\users\\gen-tya-cmprocesosho\\source\\repos\\temperatura\\temperatura.web\\services\\iavancediarioservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5671B6BF-C32F-4454-8542-F6CC3BB92DC5}|Temperatura.Web\\Temperatura.Web.csproj|solutionrelative:temperatura.web\\services\\iavancediarioservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5671B6BF-C32F-4454-8542-F6CC3BB92DC5}|Temperatura.Web\\Temperatura.Web.csproj|c:\\users\\gen-tya-cmprocesosho\\source\\repos\\temperatura\\temperatura.web\\services\\avancediarioservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5671B6BF-C32F-4454-8542-F6CC3BB92DC5}|Temperatura.Web\\Temperatura.Web.csproj|solutionrelative:temperatura.web\\services\\avancediarioservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5671B6BF-C32F-4454-8542-F6CC3BB92DC5}|Temperatura.Web\\Temperatura.Web.csproj|c:\\users\\gen-tya-cmprocesosho\\source\\repos\\temperatura\\temperatura.web\\pages\\index.cshtml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5671B6BF-C32F-4454-8542-F6CC3BB92DC5}|Temperatura.Web\\Temperatura.Web.csproj|solutionrelative:temperatura.web\\pages\\index.cshtml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5671B6BF-C32F-4454-8542-F6CC3BB92DC5}|Temperatura.Web\\Temperatura.Web.csproj|c:\\users\\gen-tya-cmprocesosho\\source\\repos\\temperatura\\temperatura.web\\pages\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{5671B6BF-C32F-4454-8542-F6CC3BB92DC5}|Temperatura.Web\\Temperatura.Web.csproj|solutionrelative:temperatura.web\\pages\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5671B6BF-C32F-4454-8542-F6CC3BB92DC5}|Temperatura.Web\\Temperatura.Web.csproj|c:\\users\\gen-tya-cmprocesosho\\source\\repos\\temperatura\\temperatura.web\\wwwroot\\css\\site.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}",
+      "RelativeMoniker": "D:0:0:{5671B6BF-C32F-4454-8542-F6CC3BB92DC5}|Temperatura.Web\\Temperatura.Web.csproj|solutionrelative:temperatura.web\\wwwroot\\css\\site.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E4C9D536-D80F-46EB-964C-5B90F44BF974}|Temperatura.Tests\\Temperatura.Tests.csproj|c:\\users\\gen-tya-cmprocesosho\\source\\repos\\temperatura\\temperatura.tests\\reportecumplimientotests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E4C9D536-D80F-46EB-964C-5B90F44BF974}|Temperatura.Tests\\Temperatura.Tests.csproj|solutionrelative:temperatura.tests\\reportecumplimientotests.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E4C9D536-D80F-46EB-964C-5B90F44BF974}|Temperatura.Tests\\Temperatura.Tests.csproj|c:\\users\\gen-tya-cmprocesosho\\source\\repos\\temperatura\\temperatura.tests\\temperatura.tests.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{E4C9D536-D80F-46EB-964C-5B90F44BF974}|Temperatura.Tests\\Temperatura.Tests.csproj|solutionrelative:temperatura.tests\\temperatura.tests.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 6,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "Index.cshtml",
+              "DocumentMoniker": "C:\\Users\\gen-tya-cmprocesosHO\\source\\repos\\temperatura\\Temperatura.Web\\Pages\\Index.cshtml",
+              "RelativeDocumentMoniker": "Temperatura.Web\\Pages\\Index.cshtml",
+              "ToolTip": "C:\\Users\\gen-tya-cmprocesosHO\\source\\repos\\temperatura\\Temperatura.Web\\Pages\\Index.cshtml",
+              "RelativeToolTip": "Temperatura.Web\\Pages\\Index.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAxwEABAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-08-13T13:30:19.652Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "Index.cshtml.cs",
+              "DocumentMoniker": "C:\\Users\\gen-tya-cmprocesosHO\\source\\repos\\temperatura\\Temperatura.Web\\Pages\\Index.cshtml.cs",
+              "RelativeDocumentMoniker": "Temperatura.Web\\Pages\\Index.cshtml.cs",
+              "ToolTip": "C:\\Users\\gen-tya-cmprocesosHO\\source\\repos\\temperatura\\Temperatura.Web\\Pages\\Index.cshtml.cs",
+              "RelativeToolTip": "Temperatura.Web\\Pages\\Index.cshtml.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAA+wFQAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-13T13:29:22.68Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "AvanceDiarioService.cs",
+              "DocumentMoniker": "C:\\Users\\gen-tya-cmprocesosHO\\source\\repos\\temperatura\\Temperatura.Web\\Services\\AvanceDiarioService.cs",
+              "RelativeDocumentMoniker": "Temperatura.Web\\Services\\AvanceDiarioService.cs",
+              "ToolTip": "C:\\Users\\gen-tya-cmprocesosHO\\source\\repos\\temperatura\\Temperatura.Web\\Services\\AvanceDiarioService.cs",
+              "RelativeToolTip": "Temperatura.Web\\Services\\AvanceDiarioService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAxwMsAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-13T13:28:41.947Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "IAvanceDiarioService.cs",
+              "DocumentMoniker": "C:\\Users\\gen-tya-cmprocesosHO\\source\\repos\\temperatura\\Temperatura.Web\\Services\\IAvanceDiarioService.cs",
+              "RelativeDocumentMoniker": "Temperatura.Web\\Services\\IAvanceDiarioService.cs",
+              "ToolTip": "C:\\Users\\gen-tya-cmprocesosHO\\source\\repos\\temperatura\\Temperatura.Web\\Services\\IAvanceDiarioService.cs",
+              "RelativeToolTip": "Temperatura.Web\\Services\\IAvanceDiarioService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAxwDkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-13T13:28:02.878Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "ReporteCumplimientoPeriodo.cs",
+              "DocumentMoniker": "C:\\Users\\gen-tya-cmprocesosHO\\source\\repos\\temperatura\\Temperatura.Web\\Services\\ReporteCumplimientoPeriodo.cs",
+              "RelativeDocumentMoniker": "Temperatura.Web\\Services\\ReporteCumplimientoPeriodo.cs",
+              "ToolTip": "C:\\Users\\gen-tya-cmprocesosHO\\source\\repos\\temperatura\\Temperatura.Web\\Services\\ReporteCumplimientoPeriodo.cs",
+              "RelativeToolTip": "Temperatura.Web\\Services\\ReporteCumplimientoPeriodo.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAxwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-13T13:27:48.079Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "TipoPeriodo.cs",
+              "DocumentMoniker": "C:\\Users\\gen-tya-cmprocesosHO\\source\\repos\\temperatura\\Temperatura.Web\\Services\\TipoPeriodo.cs",
+              "RelativeDocumentMoniker": "Temperatura.Web\\Services\\TipoPeriodo.cs",
+              "ToolTip": "C:\\Users\\gen-tya-cmprocesosHO\\source\\repos\\temperatura\\Temperatura.Web\\Services\\TipoPeriodo.cs",
+              "RelativeToolTip": "Temperatura.Web\\Services\\TipoPeriodo.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAxwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-13T13:27:39.517Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "plan-supervisor-dashboard-by-environment-and-period.md [Preview]",
+              "DocumentMoniker": "C:\\Users\\gen-tya-cmprocesosHO\\.copilot\\plans\\plan-supervisor-dashboard-by-environment-and-period.md",
+              "RelativeDocumentMoniker": "..\\..\\..\\.copilot\\plans\\plan-supervisor-dashboard-by-environment-and-period.md",
+              "ToolTip": "C:\\Users\\gen-tya-cmprocesosHO\\.copilot\\plans\\plan-supervisor-dashboard-by-environment-and-period.md [Preview]",
+              "RelativeToolTip": "..\\..\\..\\.copilot\\plans\\plan-supervisor-dashboard-by-environment-and-period.md [Preview]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2026-08-13T13:24:30.532Z",
+              "EditorCaption": " [Preview]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "Temperatura.Tests",
+              "DocumentMoniker": "C:\\Users\\gen-tya-cmprocesosHO\\source\\repos\\temperatura\\Temperatura.Tests\\Temperatura.Tests.csproj",
+              "RelativeDocumentMoniker": "Temperatura.Tests\\Temperatura.Tests.csproj",
+              "ToolTip": "C:\\Users\\gen-tya-cmprocesosHO\\source\\repos\\temperatura\\Temperatura.Tests\\Temperatura.Tests.csproj",
+              "RelativeToolTip": "Temperatura.Tests\\Temperatura.Tests.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAxwB0AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-08-13T13:45:49.556Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "ReporteCumplimientoTests.cs",
+              "DocumentMoniker": "C:\\Users\\gen-tya-cmprocesosHO\\source\\repos\\temperatura\\Temperatura.Tests\\ReporteCumplimientoTests.cs",
+              "RelativeDocumentMoniker": "Temperatura.Tests\\ReporteCumplimientoTests.cs",
+              "ToolTip": "C:\\Users\\gen-tya-cmprocesosHO\\source\\repos\\temperatura\\Temperatura.Tests\\ReporteCumplimientoTests.cs",
+              "RelativeToolTip": "Temperatura.Tests\\ReporteCumplimientoTests.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAxwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-13T13:31:49.992Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "site.css",
+              "DocumentMoniker": "C:\\Users\\gen-tya-cmprocesosHO\\source\\repos\\temperatura\\Temperatura.Web\\wwwroot\\css\\site.css",
+              "RelativeDocumentMoniker": "Temperatura.Web\\wwwroot\\css\\site.css",
+              "ToolTip": "C:\\Users\\gen-tya-cmprocesosHO\\source\\repos\\temperatura\\Temperatura.Web\\wwwroot\\css\\site.css",
+              "RelativeToolTip": "Temperatura.Web\\wwwroot\\css\\site.css",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAxwMwAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003000|",
+              "WhenOpened": "2026-08-13T13:30:45.554Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\gen-tya-cmprocesosHO\\source\\repos\\temperatura\\Temperatura.Web\\appsettings.json",
+              "RelativeDocumentMoniker": "Temperatura.Web\\appsettings.json",
+              "ToolTip": "C:\\Users\\gen-tya-cmprocesosHO\\source\\repos\\temperatura\\Temperatura.Web\\appsettings.json",
+              "RelativeToolTip": "Temperatura.Web\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABUAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-08-12T15:45:37.985Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Temperatura.Web.csproj",
+              "DocumentMoniker": "C:\\Users\\gen-tya-cmprocesosHO\\source\\repos\\temperatura\\Temperatura.Web\\Temperatura.Web.csproj",
+              "RelativeDocumentMoniker": "Temperatura.Web\\Temperatura.Web.csproj",
+              "ToolTip": "C:\\Users\\gen-tya-cmprocesosHO\\source\\repos\\temperatura\\Temperatura.Web\\Temperatura.Web.csproj",
+              "RelativeToolTip": "Temperatura.Web\\Temperatura.Web.csproj",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAIwBQAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-08-12T13:26:54.865Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

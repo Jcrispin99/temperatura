@@ -1,0 +1,57 @@
+﻿using Temperatura.Web.Domain.Enums;
+
+namespace Temperatura.Web.Services;
+
+public interface IAvanceDiarioService
+{
+    Task<IReadOnlyList<ResumenAvanceAmbiente>> ObtenerAvanceActualAsync(
+        IReadOnlyCollection<int> ambienteIds,
+        CancellationToken cancellationToken = default);
+}
+
+public enum EstadoHorarioDiario
+{
+    Completado = 1,
+    Pendiente = 2,
+    Vencido = 3,
+    Proximo = 4
+}
+
+public sealed record ResumenAvanceAmbiente(
+    int AmbienteId,
+    string Ambiente,
+    DateOnly FechaOperativa,
+    int RegistrosCompletados,
+    int RegistrosEsperados,
+    decimal PorcentajeAvance,
+    int CumplidosExigibles,
+    int HorariosExigibles,
+    decimal? PorcentajeCumplimiento,
+    int RegistrosTardios,
+    int RegistrosFueraDeRango,
+    IReadOnlyList<ResumenHorarioDiario> Horarios,
+    ResumenHorarioDiario? ProximaVentana,
+    IReadOnlyList<AlertaRangoReciente> AlertasRecientes);
+
+public sealed record ResumenHorarioDiario(
+    int HorarioId,
+    string Horario,
+    DateTimeOffset Apertura,
+    DateTimeOffset Referencia,
+    DateTimeOffset Cierre,
+    EstadoHorarioDiario Estado,
+    long? RegistroId,
+    DateTimeOffset? FechaHoraRegistro,
+    EstadoPuntualidad? Puntualidad,
+    bool FueraDeRango);
+
+public sealed record AlertaRangoReciente(
+    long RegistroId,
+    string Horario,
+    string Medicion,
+    string Unidad,
+    decimal Valor,
+    decimal LimiteMinimo,
+    decimal LimiteMaximo,
+    EstadoRango EstadoRango,
+    DateTimeOffset FechaHoraRegistro);

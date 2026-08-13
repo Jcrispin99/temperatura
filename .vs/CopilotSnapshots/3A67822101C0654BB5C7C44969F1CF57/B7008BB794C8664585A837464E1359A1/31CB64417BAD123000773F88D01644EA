@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --app-sidebar-width: 17rem;
 }
 
@@ -139,71 +139,6 @@ body {
 
 .dashboard-environment-selector {
   width: min(100%, 23rem);
-}
-
-.dashboard-filter-card .form-label {
-  margin-bottom: 0.4rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.dashboard-gauge {
-  --gauge-size: min(100%, 20rem);
-  position: relative;
-  width: var(--gauge-size);
-  height: calc(var(--gauge-size) / 2);
-  overflow: hidden;
-}
-
-.dashboard-gauge::before,
-.dashboard-gauge::after {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  border-radius: 50% 50% 0 0;
-  content: "";
-  transform: translateX(-50%);
-}
-
-.dashboard-gauge::before {
-  width: var(--gauge-size);
-  height: var(--gauge-size);
-  background: conic-gradient(from -90deg at 50% 100%, var(--tblr-primary) calc(var(--avance) * 1.8deg), var(--tblr-border-color) 0deg);
-}
-
-.dashboard-gauge::after {
-  width: calc(var(--gauge-size) - 1.8rem);
-  height: calc(var(--gauge-size) - 1.8rem);
-  background: var(--tblr-bg-surface);
-}
-
-.dashboard-gauge-value {
-  position: absolute;
-  z-index: 1;
-  right: 0;
-  bottom: 0.75rem;
-  left: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.dashboard-gauge-value span,
-.dashboard-summary-number {
-  font-size: 2rem;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.dashboard-gauge-value small {
-  margin-top: 0.25rem;
-  color: var(--tblr-secondary);
-}
-
-.dashboard-environment-list {
-  max-height: 23rem;
-  overflow-y: auto;
 }
 
 .schedule-status {
