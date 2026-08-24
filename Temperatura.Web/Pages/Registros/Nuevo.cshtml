@@ -48,6 +48,90 @@
             </div>
         }
 
+        @if (Model.RondasActualesDisponibles.Count > 0 &&
+             (Model.RondasActualesDisponibles.Count > 1 ||
+              Model.HorarioSeleccionado?.Puntualidad == EstadoPuntualidad.FueraDePlazo))
+        {
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white">
+                    <h2 class="card-title">Rondas disponibles ahora</h2>
+                </div>
+                <div class="list-group list-group-flush">
+                    @foreach (var horario in Model.RondasActualesDisponibles)
+                    {
+                        var seleccionada = Model.HorarioSeleccionado?.HorarioId == horario.HorarioId &&
+                            Model.HorarioSeleccionado.FechaOperativa == horario.FechaOperativa;
+                        <div class="list-group-item d-flex justify-content-between align-items-center gap-3">
+                            <div>
+                                <div class="fw-semibold">@horario.FechaOperativa.ToString("dd/MM/yyyy") · Horario @horario.Nombre</div>
+                                <div class="small text-secondary">Ventana hasta @horario.Cierre.ToString("HH:mm")</div>
+                            </div>
+                            @if (seleccionada)
+                            {
+                                <span class="badge text-bg-primary">Seleccionada</span>
+                            }
+                            else
+                            {
+                                <a asp-page="/Registros/Nuevo"
+                                   asp-route-AmbienteId="@Model.AmbienteId"
+                                   asp-route-HorarioId="@horario.HorarioId"
+                                   asp-route-FechaOperativaSeleccionada="@horario.FechaOperativa.ToString("yyyy-MM-dd")"
+                                   class="btn btn-sm btn-outline-primary">Registrar esta ronda</a>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (Model.RondasPendientesRegularizacion.Count > 0)
+        {
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white">
+                    <div>
+                        <h2 class="card-title mb-1">Rondas pasadas pendientes</h2>
+                        <div class="small text-secondary">
+                            Elige explícitamente la fecha y hora que deseas regularizar. Ninguna se abrirá automáticamente.
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        @foreach (var horario in Model.RondasPendientesRegularizacion)
+                        {
+                            var seleccionada = Model.HorarioSeleccionado?.Puntualidad == EstadoPuntualidad.FueraDePlazo &&
+                                Model.HorarioSeleccionado.HorarioId == horario.HorarioId &&
+                                Model.HorarioSeleccionado.FechaOperativa == horario.FechaOperativa;
+                            <div class="list-group-item d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
+                                <div>
+                                    <div class="fw-semibold">
+                                        @horario.FechaOperativa.ToString("dd/MM/yyyy") · Horario @horario.Nombre
+                                    </div>
+                                    <div class="small text-secondary">
+                                        Cerró @horario.Cierre.ToString("dd/MM HH:mm") · disponible hasta @horario.FinRegularizacion.ToString("dd/MM HH:mm")
+                                    </div>
+                                </div>
+                                @if (seleccionada)
+                                {
+                                    <span class="badge text-bg-danger">Seleccionada</span>
+                                }
+                                else
+                                {
+                                    <a asp-page="/Registros/Nuevo"
+                                       asp-route-AmbienteId="@Model.AmbienteId"
+                                       asp-route-HorarioId="@horario.HorarioId"
+                                       asp-route-FechaOperativaSeleccionada="@horario.FechaOperativa.ToString("yyyy-MM-dd")"
+                                       class="btn btn-sm btn-outline-danger">
+                                        Regularizar esta ronda
+                                    </a>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
         @if (!string.IsNullOrWhiteSpace(Model.MensajeSinVentana))
         {
             <div class="alert alert-info" role="status">
@@ -58,14 +142,18 @@
 
         @if (Model.HorarioSeleccionado is not null && Model.Mediciones.Count > 0)
         {
-            <form method="post" class="card shadow-sm border-0">
+            <form method="post" class="card shadow-sm border-0" id="measurement-form">
                 <div class="card-header bg-white py-3">
                     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                         <div>
                             <span class="text-secondary small">@Model.AmbienteSeleccionado</span>
                             <h2 class="h5 mb-0">Horario @Model.HorarioSeleccionado.Nombre</h2>
                         </div>
-                        @if (Model.HorarioSeleccionado.Puntualidad == EstadoPuntualidad.Tardio)
+                        @if (Model.HorarioSeleccionado.Puntualidad == EstadoPuntualidad.FueraDePlazo)
+                        {
+                            <span class="badge text-bg-danger">Fuera de plazo</span>
+                        }
+                        else if (Model.HorarioSeleccionado.Puntualidad == EstadoPuntualidad.Tardio)
                         {
                             <span class="badge text-bg-warning">Registro tardío</span>
                         }
@@ -76,7 +164,9 @@
                     </div>
                     <div class="small text-secondary mt-2">
                         Día operativo: @Model.HorarioSeleccionado.FechaOperativa.ToString("dd/MM/yyyy") ·
-                        Ventana hasta @Model.HorarioSeleccionado.Cierre.ToString("HH:mm")
+                        Puntual hasta @Model.HorarioSeleccionado.LimitePuntualidad.ToString("HH:mm") ·
+                        Cierre @Model.HorarioSeleccionado.Cierre.ToString("HH:mm") ·
+                        Regularización hasta @Model.HorarioSeleccionado.FinRegularizacion.ToString("dd/MM HH:mm")
                     </div>
                 </div>
 
@@ -84,6 +174,28 @@
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
                     <input asp-for="AmbienteId" type="hidden" />
                     <input asp-for="HorarioId" type="hidden" />
+                    <input asp-for="FechaOperativaSeleccionada" type="hidden" />
+                    <input asp-for="ConfirmacionFueraDeRango" type="hidden" id="out-of-range-confirmation" />
+
+                    @if (Model.HorarioSeleccionado.Puntualidad == EstadoPuntualidad.FueraDePlazo)
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            <div class="fw-semibold">Esta ronda ya venció.</div>
+                            <div class="small">
+                                La medición se guardará con la hora real como regularización fuera de plazo.
+                                No contará como cumplimiento y generará una falta pendiente de revisión.
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label asp-for="MotivoFueraDePlazo" class="form-label fw-semibold">
+                                Motivo de la regularización
+                            </label>
+                            <textarea asp-for="MotivoFueraDePlazo" class="form-control" rows="3" maxlength="500"
+                                      placeholder="Explica por qué no se realizó el registro dentro de la ventana."></textarea>
+                            <div class="form-text">Obligatorio. Máximo 500 caracteres.</div>
+                            <span asp-validation-for="MotivoFueraDePlazo" class="text-danger small"></span>
+                        </div>
+                    }
 
                     <div class="row g-4">
                         @for (var indice = 0; indice < Model.Mediciones.Count; indice++)
@@ -93,15 +205,19 @@
                                 ? "1"
                                 : $"0.{new string('0', medicion.DecimalesPermitidos - 1)}1";
 
-                            <div class="col-md-6">
+                            <div class="col-12">
                                 <input asp-for="Mediciones[indice].AmbienteMedicionId" type="hidden" />
-                                <div class="measurement-field h-100">
+                                <div class="measurement-field h-100 measurement-entry"
+                                     data-measurement-name="@medicion.Nombre"
+                                     data-measurement-unit="@medicion.Unidad"
+                                     data-range-min="@medicion.RangoMinimo.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                     data-range-max="@medicion.RangoMaximo.ToString(System.Globalization.CultureInfo.InvariantCulture)">
                                     <label asp-for="Mediciones[indice].Valor" class="form-label fw-semibold">
                                         @medicion.Nombre
                                     </label>
                                     <div class="input-group input-group-lg">
                                         <input asp-for="Mediciones[indice].Valor"
-                                               class="form-control"
+                                               class="form-control measurement-value"
                                                inputmode="decimal"
                                                step="@paso"
                                                autocomplete="off" />
@@ -111,6 +227,21 @@
                                         Rango configurado: @medicion.RangoMinimo.ToString("0.##") a @medicion.RangoMaximo.ToString("0.##") @medicion.Unidad
                                     </div>
                                     <span asp-validation-for="Mediciones[indice].Valor" class="text-danger small"></span>
+
+                                    <details class="measurement-observation mt-3"
+                                             open="@(!string.IsNullOrWhiteSpace(medicion.Observacion))">
+                                        <summary class="fw-semibold text-primary">
+                                            Agregar observación para @medicion.Nombre
+                                        </summary>
+                                        <div class="pt-3">
+                                            <textarea asp-for="Mediciones[indice].Observacion"
+                                                      class="form-control" rows="3" maxlength="500"
+                                                      placeholder="Escribe una observación sobre esta medición (opcional)."></textarea>
+                                            <div class="form-text">Máximo 500 caracteres.</div>
+                                            <span asp-validation-for="Mediciones[indice].Observacion"
+                                                  class="text-danger small"></span>
+                                        </div>
+                                    </details>
                                 </div>
                             </div>
                         }
@@ -127,10 +258,136 @@
             <p class="small text-secondary mt-3">
                 Una vez confirmado, el registro no podrá modificarse ni eliminarse.
             </p>
+
+            <div class="modal modal-blur fade" id="out-of-range-modal" tabindex="-1"
+                 aria-labelledby="out-of-range-modal-title" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2 class="modal-title h4" id="out-of-range-modal-title">Confirmar mediciones fuera de rango</h2>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="alert alert-warning" role="alert">
+                                Uno o más valores están fuera de los límites configurados para
+                                <strong>@Model.AmbienteSeleccionado</strong>. Confirma que los valores
+                                fueron transcritos correctamente antes de guardar.
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-vcenter mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Medición</th>
+                                            <th>Valor ingresado</th>
+                                            <th>Rango permitido</th>
+                                            <th>Resultado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="out-of-range-details"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                Volver y corregir
+                            </button>
+                            <button type="button" class="btn btn-warning" id="confirm-out-of-range">
+                                Confirmar registro
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         }
     </div>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            const form = document.getElementById('measurement-form');
+            const modalElement = document.getElementById('out-of-range-modal');
+            const details = document.getElementById('out-of-range-details');
+            const confirmButton = document.getElementById('confirm-out-of-range');
+            const confirmationInput = document.getElementById('out-of-range-confirmation');
+            if (!form || !modalElement || !details || !confirmButton || !confirmationInput) {
+                return;
+            }
+
+            const parseDecimal = value => Number.parseFloat(value.trim().replace(',', '.'));
+            const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+
+            const addCell = (row, value, className) => {
+                const cell = document.createElement('td');
+                cell.textContent = value;
+                if (className) {
+                    cell.className = className;
+                }
+                row.appendChild(cell);
+            };
+
+            form.addEventListener('submit', event => {
+                if (confirmationInput.value.toLowerCase() === 'true' || !form.checkValidity()) {
+                    return;
+                }
+
+                const fueraDeRango = [];
+                form.querySelectorAll('.measurement-entry').forEach(entry => {
+                    const input = entry.querySelector('.measurement-value');
+                    const value = input ? parseDecimal(input.value) : Number.NaN;
+                    const minimum = parseDecimal(entry.dataset.rangeMin ?? '');
+                    const maximum = parseDecimal(entry.dataset.rangeMax ?? '');
+                    if (Number.isNaN(value) || Number.isNaN(minimum) || Number.isNaN(maximum)) {
+                        return;
+                    }
+
+                    if (value < minimum || value > maximum) {
+                        fueraDeRango.push({
+                            name: entry.dataset.measurementName ?? 'Medición',
+                            unit: entry.dataset.measurementUnit ?? '',
+                            value,
+                            minimum,
+                            maximum,
+                            result: value < minimum ? 'Por debajo' : 'Por encima'
+                        });
+                    }
+                });
+
+                if (fueraDeRango.length === 0) {
+                    return;
+                }
+
+                event.preventDefault();
+                confirmationInput.value = 'false';
+                details.replaceChildren();
+                fueraDeRango.forEach(medicion => {
+                    const row = document.createElement('tr');
+                    addCell(row, medicion.name, 'fw-semibold');
+                    addCell(row, `${medicion.value} ${medicion.unit}`);
+                    addCell(row, `${medicion.minimum} a ${medicion.maximum} ${medicion.unit}`);
+
+                    const resultCell = document.createElement('td');
+                    const badge = document.createElement('span');
+                    badge.className = 'badge text-bg-danger';
+                    badge.textContent = medicion.result;
+                    resultCell.appendChild(badge);
+                    row.appendChild(resultCell);
+                    details.appendChild(row);
+                });
+                modal.show();
+            });
+
+            confirmButton.addEventListener('click', () => {
+                confirmationInput.value = 'true';
+                confirmButton.disabled = true;
+                modal.hide();
+                form.requestSubmit();
+            });
+
+            modalElement.addEventListener('hidden.bs.modal', () => {
+                confirmButton.disabled = false;
+            });
+        })();
+    </script>
 }

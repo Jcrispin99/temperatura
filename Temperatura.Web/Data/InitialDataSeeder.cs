@@ -16,6 +16,7 @@ public static class InitialDataSeeder
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<ApplicationUser>>();
         var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        var environment = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
         var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>()
             .CreateLogger("InitialDataSeeder");
 
@@ -30,6 +31,9 @@ public static class InitialDataSeeder
                     $"crear el rol {nombreRol}");
             }
         }
+
+        await SembrarUsuariosDeTrabajoAsync(
+            context, userManager, passwordHasher, configuration, environment, logger);
 
         var correo = configuration["Seed:Supervisor:Email"]?.Trim();
         if (string.IsNullOrWhiteSpace(correo))
@@ -70,6 +74,123 @@ public static class InitialDataSeeder
                 await userManager.AddToRoleAsync(supervisor, "Supervisor"),
                 "asignar el rol Supervisor al usuario inicial");
         }
+    }
+
+    /// <summary>
+    /// Crea las cuentas de trabajo declaradas en <c>Seed:Usuarios:Cuentas</c>.
+    /// Solo corre en Development y solo crea lo que falta: nunca toca la contraseña
+    /// de una cuenta existente, para que un despliegue no pueda dejar credenciales conocidas.
+    /// </summary>
+    private static async Task SembrarUsuariosDeTrabajoAsync(
+        ApplicationDbContext context,
+        UserManager<ApplicationUser> userManager,
+        IPasswordHasher<ApplicationUser> passwordHasher,
+        IConfiguration configuration,
+        IHostEnvironment environment,
+        ILogger logger)
+    {
+        if (!environment.IsDevelopment())
+        {
+            return;
+        }
+
+        var cuentas = configuration.GetSection("Seed:Usuarios:Cuentas").Get<CuentaSembrada[]>();
+        if (cuentas is null || cuentas.Length == 0)
+        {
+            return;
+        }
+
+        var contrasena = configuration["Seed:Usuarios:ContrasenaPredeterminada"];
+        if (string.IsNullOrWhiteSpace(contrasena))
+        {
+            logger.LogWarning(
+                "Hay {Cantidad} cuenta(s) en Seed:Usuarios:Cuentas pero falta " +
+                "Seed:Usuarios:ContrasenaPredeterminada; se omite el sembrado.",
+                cuentas.Length);
+            return;
+        }
+
+        foreach (var cuenta in cuentas)
+        {
+            var correoCuenta = cuenta.Email?.Trim();
+            if (string.IsNullOrWhiteSpace(correoCuenta))
+            {
+                continue;
+            }
+
+            var existente = await userManager.FindByEmailAsync(correoCuenta);
+            if (existente is not null)
+            {
+                continue;
+            }
+
+            var nuevo = new ApplicationUser
+            {
+                UserName = correoCuenta,
+                Email = correoCuenta,
+                Nombre = cuenta.Nombre?.Trim() ?? correoCuenta,
+                EmailConfirmed = true,
+                Activo = true
+            };
+
+            // Igual que el supervisor inicial: el hash se calcula aquí para no
+            // relajar la política de contraseñas del sistema.
+            nuevo.PasswordHash = passwordHasher.HashPassword(nuevo, contrasena);
+            VerificarResultado(await userManager.CreateAsync(nuevo), $"crear el usuario {correoCuenta}");
+
+            var rol = string.IsNullOrWhiteSpace(cuenta.Rol) ? "Registrador" : cuenta.Rol.Trim();
+            VerificarResultado(
+                await userManager.AddToRoleAsync(nuevo, rol),
+                $"asignar el rol {rol} a {correoCuenta}");
+
+            await AsignarAmbientePredeterminadoAsync(context, nuevo, cuenta.Ambiente, correoCuenta, logger);
+            logger.LogInformation("Se creó la cuenta de desarrollo {Correo} con rol {Rol}.", correoCuenta, rol);
+        }
+
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task AsignarAmbientePredeterminadoAsync(
+        ApplicationDbContext context,
+        ApplicationUser usuario,
+        string? nombreAmbiente,
+        string correo,
+        ILogger logger)
+    {
+        if (string.IsNullOrWhiteSpace(nombreAmbiente))
+        {
+            return;
+        }
+
+        var ambiente = await context.Ambientes
+            .SingleOrDefaultAsync(x => x.Nombre == nombreAmbiente.Trim());
+        if (ambiente is null)
+        {
+            logger.LogWarning(
+                "No existe el ambiente '{Ambiente}' declarado para {Correo}; se omite la asignación.",
+                nombreAmbiente,
+                correo);
+            return;
+        }
+
+        context.UsuariosAmbientes.Add(new UsuarioAmbiente
+        {
+            UsuarioId = usuario.Id,
+            AmbienteId = ambiente.Id,
+            EsPredeterminado = true,
+            Activo = true
+        });
+    }
+
+    private sealed class CuentaSembrada
+    {
+        public string? Email { get; set; }
+
+        public string? Nombre { get; set; }
+
+        public string? Rol { get; set; }
+
+        public string? Ambiente { get; set; }
     }
 
     private static void VerificarResultado(IdentityResult resultado, string operacion)

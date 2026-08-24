@@ -16,8 +16,18 @@
                     <p class="text-secondary mb-0">Fecha operativa @Model.Registro.FechaOperativa.ToString("dd/MM/yyyy")</p>
                 </div>
                 <div class="d-flex gap-2">
-                    <span class="badge @(Model.Registro.Puntualidad == EstadoPuntualidad.Puntual ? "text-bg-success" : "text-bg-warning")">
-                        @(Model.Registro.Puntualidad == EstadoPuntualidad.Puntual ? "Puntual" : "Tardío")
+                    <span class="badge @(Model.Registro.Puntualidad switch
+                    {
+                        EstadoPuntualidad.Puntual => "text-bg-success",
+                        EstadoPuntualidad.Tardio => "text-bg-warning",
+                        _ => "text-bg-danger"
+                    })">
+                        @(Model.Registro.Puntualidad switch
+                        {
+                            EstadoPuntualidad.Puntual => "Puntual",
+                            EstadoPuntualidad.Tardio => "Tardío",
+                            _ => "Fuera de plazo"
+                        })
                     </span>
                     <span class="badge @(fueraDeRango ? "text-bg-danger" : "text-bg-azure")">
                         @(fueraDeRango ? "Con alerta de rango" : "Dentro de rango")
@@ -25,6 +35,15 @@
                 </div>
             </div>
         </div>
+
+        @if (Model.Registro.Puntualidad == EstadoPuntualidad.FueraDePlazo)
+        {
+            <div class="alert alert-danger mb-4" role="status">
+                <div class="fw-semibold">Registro de regularización fuera de plazo</div>
+                <div class="small mt-1">Este registro no cuenta como cumplimiento y mantiene una falta para revisión.</div>
+                <div class="mt-2"><strong>Motivo informado:</strong> @Model.Registro.MotivoFueraDePlazo</div>
+            </div>
+        }
 
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-body">
@@ -86,6 +105,15 @@
                                     }
                                 </td>
                             </tr>
+                            @if (!string.IsNullOrWhiteSpace(medicion.Observacion))
+                            {
+                                <tr class="table-light">
+                                    <td colspan="4">
+                                        <div class="text-secondary small">Observación de @medicion.Nombre</div>
+                                        <div class="registro-observacion">@medicion.Observacion</div>
+                                    </td>
+                                </tr>
+                            }
                         }
                     </tbody>
                 </table>

@@ -26,15 +26,35 @@ public class NuevoModel(
     [BindProperty(SupportsGet = true)]
     public int? AmbienteId { get; set; }
 
-    [BindProperty]
+    [BindProperty(SupportsGet = true)]
     public int HorarioId { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public DateOnly? FechaOperativaSeleccionada { get; set; }
 
     [BindProperty]
     public List<MedicionInput> Mediciones { get; set; } = [];
 
+    [BindProperty]
+    public bool ConfirmacionFueraDeRango { get; set; }
+
+    [BindProperty]
+    public string? MotivoFueraDePlazo { get; set; }
+
     public IReadOnlyList<AmbienteOpcion> Ambientes { get; private set; } = [];
 
     public IReadOnlyList<HorarioOpcion> HorariosDisponibles { get; private set; } = [];
+
+    public IReadOnlyList<HorarioOpcion> RondasPendientesRegularizacion => HorariosDisponibles
+        .Where(x => x.Puntualidad == EstadoPuntualidad.FueraDePlazo)
+        .OrderByDescending(x => x.FechaOperativa)
+        .ThenByDescending(x => x.Cierre)
+        .ToArray();
+
+    public IReadOnlyList<HorarioOpcion> RondasActualesDisponibles => HorariosDisponibles
+        .Where(x => x.Puntualidad != EstadoPuntualidad.FueraDePlazo)
+        .OrderBy(x => x.Apertura)
+        .ToArray();
 
     public HorarioOpcion? HorarioSeleccionado { get; private set; }
 
@@ -47,7 +67,10 @@ public class NuevoModel(
 
     public async Task<IActionResult> OnGetAsync()
     {
-        var preparado = await PrepararPaginaAsync(null, permitirAmbientePredeterminado: true);
+        var preparado = await PrepararPaginaAsync(
+            null,
+            null,
+            permitirAmbientePredeterminado: true);
         return preparado ? Page() : Forbid();
     }
 
@@ -59,6 +82,9 @@ public class NuevoModel(
         var valoresPorConfiguracion = medicionesEnviadas
             .GroupBy(x => x.AmbienteMedicionId)
             .ToDictionary(x => x.Key, x => x.First().Valor);
+        var observacionesPorConfiguracion = medicionesEnviadas
+            .GroupBy(x => x.AmbienteMedicionId)
+            .ToDictionary(x => x.Key, x => x.First().Observacion);
 
         if (medicionesEnviadas.GroupBy(x => x.AmbienteMedicionId).Any(x => x.Count() > 1))
         {
@@ -67,6 +93,7 @@ public class NuevoModel(
 
         var preparado = await PrepararPaginaAsync(
             valoresPorConfiguracion,
+            observacionesPorConfiguracion,
             permitirAmbientePredeterminado: false);
 
         if (!preparado || HorarioSeleccionado is null || AmbienteId is null)
@@ -97,6 +124,50 @@ public class NuevoModel(
                     $"Mediciones[{indice}].Valor",
                     $"Usa como máximo {medicion.DecimalesPermitidos} decimal(es).");
             }
+
+            medicion.Observacion = string.IsNullOrWhiteSpace(medicion.Observacion)
+                ? null
+                : medicion.Observacion.Trim();
+            if (medicion.Observacion?.Length > 500)
+            {
+                ModelState.AddModelError(
+                    $"Mediciones[{indice}].Observacion",
+                    "La observación admite hasta 500 caracteres.");
+            }
+        }
+
+        if (Mediciones.Any(x =>
+                x.Valor.HasValue &&
+                EvaluarRango(x.Valor.Value, x.RangoMinimo, x.RangoMaximo) !=
+                    EstadoRango.DentroDeRango) &&
+            !ConfirmacionFueraDeRango)
+        {
+            ModelState.AddModelError(
+                string.Empty,
+                "Hay mediciones fuera del rango permitido. Revisa los valores y confirma expresamente el registro.");
+        }
+
+        MotivoFueraDePlazo = string.IsNullOrWhiteSpace(MotivoFueraDePlazo)
+            ? null
+            : MotivoFueraDePlazo.Trim();
+        if (HorarioSeleccionado.Puntualidad == EstadoPuntualidad.FueraDePlazo)
+        {
+            if (MotivoFueraDePlazo is null)
+            {
+                ModelState.AddModelError(
+                    nameof(MotivoFueraDePlazo),
+                    "Explica por qué la medición se está regularizando fuera de plazo.");
+            }
+            else if (MotivoFueraDePlazo.Length > 500)
+            {
+                ModelState.AddModelError(
+                    nameof(MotivoFueraDePlazo),
+                    "El motivo admite hasta 500 caracteres.");
+            }
+        }
+        else
+        {
+            MotivoFueraDePlazo = null;
         }
 
         if (!ModelState.IsValid)
@@ -115,6 +186,7 @@ public class NuevoModel(
             FechaHoraRegistro = ahoraLocal,
             Estado = EstadoRegistro.Confirmado,
             Puntualidad = HorarioSeleccionado.Puntualidad,
+            MotivoFueraDePlazo = MotivoFueraDePlazo,
             Detalles = Mediciones.Select(x => new DetalleRegistro
             {
                 AmbienteMedicionId = x.AmbienteMedicionId,
@@ -122,11 +194,40 @@ public class NuevoModel(
                 Valor = x.Valor!.Value,
                 LimiteMinimoAplicado = x.RangoMinimo,
                 LimiteMaximoAplicado = x.RangoMaximo,
-                EstadoRango = EvaluarRango(x.Valor.Value, x.RangoMinimo, x.RangoMaximo)
+                EstadoRango = EvaluarRango(x.Valor.Value, x.RangoMinimo, x.RangoMaximo),
+                Observacion = x.Observacion
             }).ToArray()
         };
 
         _context.Registros.Add(registro);
+
+        if (HorarioSeleccionado.Puntualidad == EstadoPuntualidad.FueraDePlazo)
+        {
+            var incidencia = await _context.AlertasRegistrosOmitidos.SingleOrDefaultAsync(x =>
+                x.FechaOperativa == HorarioSeleccionado.FechaOperativa &&
+                x.AmbienteId == AmbienteId.Value &&
+                x.HorarioId == HorarioSeleccionado.HorarioId);
+
+            if (incidencia is null)
+            {
+                incidencia = new AlertaRegistroOmitido
+                {
+                    FechaOperativa = HorarioSeleccionado.FechaOperativa,
+                    AmbienteId = AmbienteId.Value,
+                    HorarioId = HorarioSeleccionado.HorarioId,
+                    FechaHoraCierre = HorarioSeleccionado.Cierre,
+                    FechaHoraDeteccion = ahoraLocal,
+                    Estado = EstadoAlertaRegistroOmitido.Pendiente
+                };
+                _context.AlertasRegistrosOmitidos.Add(incidencia);
+            }
+
+            incidencia.EstadoIncidencia = EstadoIncidenciaRegistro.RegularizadaFueraDePlazo;
+            incidencia.FechaHoraRegularizacion = ahoraLocal;
+            incidencia.RegistroRegularizacion = registro;
+            incidencia.Estado = EstadoAlertaRegistroOmitido.Pendiente;
+            incidencia.UltimoError = null;
+        }
 
         try
         {
@@ -145,12 +246,15 @@ public class NuevoModel(
             return Page();
         }
 
-        MensajeExito = $"Registro de {AmbienteSeleccionado} guardado correctamente.";
+        MensajeExito = HorarioSeleccionado.Puntualidad == EstadoPuntualidad.FueraDePlazo
+            ? $"Registro de {AmbienteSeleccionado} guardado fuera de plazo. La falta quedó pendiente de revisión."
+            : $"Registro de {AmbienteSeleccionado} guardado correctamente.";
         return RedirectToPage(new { ambienteId = AmbienteId });
     }
 
     private async Task<bool> PrepararPaginaAsync(
         IReadOnlyDictionary<int, decimal?>? valoresEnviados,
+        IReadOnlyDictionary<int, string?>? observacionesEnviadas,
         bool permitirAmbientePredeterminado)
     {
         var usuarioId = _userManager.GetUserId(User);
@@ -180,7 +284,7 @@ public class NuevoModel(
         AmbienteSeleccionado = ambiente.Nombre;
         var ahoraLocal = _ventanaRegistroService.ObtenerAhoraLocal();
         var fechaLocal = DateOnly.FromDateTime(ahoraLocal.DateTime);
-        var fechaOperativaMinima = fechaLocal.AddDays(-1);
+        var fechaOperativaMinima = fechaLocal.AddDays(-3);
         var configuracionesHorario = await _context.AmbientesHorarios
             .AsNoTracking()
             .Include(x => x.Horario)
@@ -207,12 +311,16 @@ public class NuevoModel(
 
         HorariosDisponibles = ventanas
             .Where(x => !existentes.Contains((x.FechaOperativa, x.Configuracion.HorarioId)))
+            .OrderBy(x => x.Puntualidad == EstadoPuntualidad.FueraDePlazo ? 1 : 0)
+            .ThenByDescending(x => x.HoraReferencia)
             .Select(x => new HorarioOpcion(
                 x.Configuracion.HorarioId,
                 x.Configuracion.Horario.Nombre,
                 x.FechaOperativa,
                 x.Apertura,
+                x.LimitePuntualidad,
                 x.Cierre,
+                x.FinRegularizacion,
                 x.Puntualidad))
             .ToArray();
 
@@ -224,12 +332,24 @@ public class NuevoModel(
             return true;
         }
 
-        if (HorarioId == 0)
+        if (HorarioId == 0 && !FechaOperativaSeleccionada.HasValue)
         {
-            HorarioId = HorariosDisponibles[0].HorarioId;
+            var rondaActual = HorariosDisponibles.FirstOrDefault(x =>
+                x.Puntualidad != EstadoPuntualidad.FueraDePlazo);
+            if (rondaActual is not null)
+            {
+                HorarioId = rondaActual.HorarioId;
+                FechaOperativaSeleccionada = rondaActual.FechaOperativa;
+            }
         }
 
-        HorarioSeleccionado = HorariosDisponibles.FirstOrDefault(x => x.HorarioId == HorarioId);
+        HorarioSeleccionado = FechaOperativaSeleccionada.HasValue
+            ? HorariosDisponibles.FirstOrDefault(x =>
+                x.HorarioId == HorarioId &&
+                x.FechaOperativa == FechaOperativaSeleccionada.Value)
+            : HorariosDisponibles.FirstOrDefault(x =>
+                x.HorarioId == HorarioId &&
+                x.Puntualidad != EstadoPuntualidad.FueraDePlazo);
         if (HorarioSeleccionado is null)
         {
             return true;
@@ -266,7 +386,8 @@ public class NuevoModel(
             DecimalesPermitidos = x.TipoMedicion.DecimalesPermitidos,
             RangoMinimo = x.RangoMinimo,
             RangoMaximo = x.RangoMaximo,
-            Valor = valoresEnviados?.GetValueOrDefault(x.Id)
+            Valor = valoresEnviados?.GetValueOrDefault(x.Id),
+            Observacion = observacionesEnviadas?.GetValueOrDefault(x.Id)
         }).ToList();
 
         if (Mediciones.Count == 0)
@@ -326,6 +447,8 @@ public class NuevoModel(
 
         [Required(ErrorMessage = "Ingresa un valor.")]
         public decimal? Valor { get; set; }
+
+        public string? Observacion { get; set; }
     }
 
     public sealed record AmbienteOpcion(int Id, string Nombre, bool EsPredeterminado);
@@ -335,7 +458,9 @@ public class NuevoModel(
         string Nombre,
         DateOnly FechaOperativa,
         DateTimeOffset Apertura,
+        DateTimeOffset LimitePuntualidad,
         DateTimeOffset Cierre,
+        DateTimeOffset FinRegularizacion,
         EstadoPuntualidad Puntualidad);
 
     private sealed record RegistroExistente(DateOnly FechaOperativa, int HorarioId);

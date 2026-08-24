@@ -28,6 +28,7 @@ public sealed record ResumenAvanceAmbiente(
     int HorariosExigibles,
     decimal? PorcentajeCumplimiento,
     int RegistrosTardios,
+    int RegistrosFueraDePlazo,
     int RegistrosFueraDeRango,
     IReadOnlyList<ResumenHorarioDiario> Horarios,
     ResumenHorarioDiario? ProximaVentana,

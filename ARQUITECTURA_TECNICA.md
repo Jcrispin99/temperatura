@@ -12,7 +12,7 @@ Tu análisis está sólido. Aquí la validación y ajustes:
 
 ✅ **Medicion** - Definición de qué se mide (Temperatura, Humedad, Refrigeración)
 ✅ **Ambiente** - Lugares físicos (Farmacia, Enfermería, UMA 1/2/3)
-✅ **Horario/Turno** - Bloques de tiempo (7am, 12pm, 7pm, 00am)
+✅ **Horario/Turno** - Bloques de tiempo (7am, 1pm, 7pm, 1am)
 ✅ **Usuario** - Personal que toma registros
 ✅ **RegistroDiario** - Transacciones diarias (la tabla que crece)
 
@@ -54,7 +54,7 @@ CREATE TABLE Ambientes (
 -- Tabla Base: Horarios/Turnos
 CREATE TABLE Horarios (
     ID INT PRIMARY KEY IDENTITY(1,1),
-    Hora TIME NOT NULL UNIQUE, -- "07:00", "12:00", "19:00", "00:00"
+    Hora TIME NOT NULL UNIQUE, -- "07:00", "13:00", "19:00", "01:00"
     Nombre NVARCHAR(50), -- "Turno Mañana", "Turno Tarde", etc.
     Activo BIT DEFAULT 1
 );
@@ -461,9 +461,9 @@ public static class DataSeeder
         // Mediciones
         var mediciones = new List<Medicion>
         {
-            new { Id = 1, Nombre = "Temperatura", RangoMinimo = 2, RangoMaximo = 8, Unidad = "°C" },
-            new { Id = 2, Nombre = "Humedad", RangoMinimo = 30, RangoMaximo = 70, Unidad = "%" },
-            new { Id = 3, Nombre = "Refrigeración", RangoMinimo = 0, RangoMaximo = 5, Unidad = "°C" }
+            new { Id = 1, Nombre = "Temperatura", RangoMinimo = 15, RangoMaximo = 30, Unidad = "°C" },
+            new { Id = 2, Nombre = "Humedad", RangoMinimo = 15, RangoMaximo = 65, Unidad = "%" },
+            new { Id = 3, Nombre = "Refrigeración", RangoMinimo = 2, RangoMaximo = 8, Unidad = "°C" }
         };
 
         // Ambientes
@@ -480,9 +480,9 @@ public static class DataSeeder
         var horarios = new List<Horario>
         {
             new { Id = 1, Hora = new TimeOnly(07, 0), Nombre = "Turno Mañana" },
-            new { Id = 2, Hora = new TimeOnly(12, 0), Nombre = "Turno Mediodía" },
+            new { Id = 2, Hora = new TimeOnly(13, 0), Nombre = "Turno Mediodía" },
             new { Id = 3, Hora = new TimeOnly(19, 0), Nombre = "Turno Tarde" },
-            new { Id = 4, Hora = new TimeOnly(00, 0), Nombre = "Turno Noche" }
+            new { Id = 4, Hora = new TimeOnly(01, 0), Nombre = "Turno Noche" }
         };
 
         // Configuración: Ambiente-Medición
@@ -515,13 +515,13 @@ public static class DataSeeder
         // Configuración: Ambiente-Horario
         var ambienteHorarios = new List<AmbienteHorario>
         {
-            // UMA 1: 4 turnos (7am, 12pm, 7pm, 00am)
+            // UMA 1: 4 turnos (7am, 1pm, 7pm, 1am)
             new { Ambiente_ID = 3, Horario_ID = 1, Habilitado = true },
             new { Ambiente_ID = 3, Horario_ID = 2, Habilitado = true },
             new { Ambiente_ID = 3, Horario_ID = 3, Habilitado = true },
             new { Ambiente_ID = 3, Horario_ID = 4, Habilitado = true },
 
-            // Farmacia: 3 turnos (7am, 12pm, 7pm - SIN noche)
+            // Farmacia: 3 turnos (7am, 1pm, 7pm - SIN noche)
             new { Ambiente_ID = 1, Horario_ID = 1, Habilitado = true },
             new { Ambiente_ID = 1, Horario_ID = 2, Habilitado = true },
             new { Ambiente_ID = 1, Horario_ID = 3, Habilitado = true },
@@ -538,7 +538,7 @@ public static class DataSeeder
             new { Ambiente_ID = 4, Horario_ID = 3, Habilitado = true },
             new { Ambiente_ID = 4, Horario_ID = 4, Habilitado = true },
 
-            // UMA 3: 3 turnos (7am, 12pm, 7pm - SIN noche)
+            // UMA 3: 3 turnos (7am, 1pm, 7pm - SIN noche)
             new { Ambiente_ID = 5, Horario_ID = 1, Habilitado = true },
             new { Ambiente_ID = 5, Horario_ID = 2, Habilitado = true },
             new { Ambiente_ID = 5, Horario_ID = 3, Habilitado = true }

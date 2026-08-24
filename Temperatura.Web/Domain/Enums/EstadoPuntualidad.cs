@@ -3,5 +3,6 @@ namespace Temperatura.Web.Domain.Enums;
 public enum EstadoPuntualidad
 {
     Puntual = 1,
-    Tardio = 2
+    Tardio = 2,
+    FueraDePlazo = 3
 }

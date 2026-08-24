@@ -20,6 +20,8 @@ public class Registro
 
     public EstadoPuntualidad Puntualidad { get; set; }
 
+    public string? MotivoFueraDePlazo { get; set; }
+
     public Ambiente Ambiente { get; set; } = null!;
 
     public Horario Horario { get; set; } = null!;
@@ -27,4 +29,6 @@ public class Registro
     public ApplicationUser Usuario { get; set; } = null!;
 
     public ICollection<DetalleRegistro> Detalles { get; set; } = [];
+
+    public AlertaRegistroOmitido? IncidenciaRegularizada { get; set; }
 }

@@ -18,13 +18,30 @@ public class AlertaRegistroOmitido
 
     public EstadoAlertaRegistroOmitido Estado { get; set; } = EstadoAlertaRegistroOmitido.Pendiente;
 
+    public EstadoIncidenciaRegistro EstadoIncidencia { get; set; } =
+        EstadoIncidenciaRegistro.PendienteRegistro;
+
     public int IntentosEnvio { get; set; }
 
     public DateTimeOffset? FechaHoraEnvio { get; set; }
 
     public string? UltimoError { get; set; }
 
+    public long? RegistroRegularizacionId { get; set; }
+
+    public DateTimeOffset? FechaHoraRegularizacion { get; set; }
+
+    public string? RevisadoPorUsuarioId { get; set; }
+
+    public DateTimeOffset? FechaHoraRevision { get; set; }
+
+    public string? ComentarioRevision { get; set; }
+
     public Ambiente Ambiente { get; set; } = null!;
 
     public Horario Horario { get; set; } = null!;
+
+    public Registro? RegistroRegularizacion { get; set; }
+
+    public ApplicationUser? RevisadoPorUsuario { get; set; }
 }

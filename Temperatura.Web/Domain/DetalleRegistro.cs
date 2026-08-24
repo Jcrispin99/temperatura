@@ -20,6 +20,8 @@ public class DetalleRegistro
 
     public EstadoRango EstadoRango { get; set; }
 
+    public string? Observacion { get; set; }
+
     public Registro Registro { get; set; } = null!;
 
     public AmbienteMedicion AmbienteMedicion { get; set; } = null!;

@@ -40,6 +40,7 @@ public class DetalleModel(
                 x.Usuario.Email ?? string.Empty,
                 x.FechaHoraRegistro,
                 x.Puntualidad,
+                x.MotivoFueraDePlazo,
                 x.Detalles
                     .OrderBy(y => y.TipoMedicionId)
                     .Select(y => new MedicionDetalle(
@@ -48,7 +49,8 @@ public class DetalleModel(
                         y.Valor,
                         y.LimiteMinimoAplicado,
                         y.LimiteMaximoAplicado,
-                        y.EstadoRango))
+                        y.EstadoRango,
+                        y.Observacion))
                     .ToList()))
             .SingleOrDefaultAsync();
 
@@ -70,6 +72,7 @@ public class DetalleModel(
         string Email,
         DateTimeOffset FechaHoraRegistro,
         EstadoPuntualidad Puntualidad,
+        string? MotivoFueraDePlazo,
         IReadOnlyList<MedicionDetalle> Mediciones);
 
     public sealed record MedicionDetalle(
@@ -78,5 +81,6 @@ public class DetalleModel(
         decimal Valor,
         decimal LimiteMinimo,
         decimal LimiteMaximo,
-        EstadoRango EstadoRango);
+        EstadoRango EstadoRango,
+        string? Observacion);
 }

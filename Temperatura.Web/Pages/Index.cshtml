@@ -96,17 +96,21 @@ else if (Model.EsSupervisor)
                         </div>
                     </div>
                     <div class="row g-3 w-100 mt-2 text-center">
-                        <div class="col-sm-4">
+                        <div class="col-sm-3">
                             <div class="text-secondary small">Áreas consideradas</div>
                             <div class="dashboard-summary-number">@resumenPeriodo.AmbientesConsiderados</div>
                         </div>
-                        <div class="col-sm-4">
+                        <div class="col-sm-3">
                             <div class="text-secondary small">Registrados</div>
                             <div class="dashboard-summary-number text-success">@resumenPeriodo.RegistrosCompletados</div>
                         </div>
-                        <div class="col-sm-4">
-                            <div class="text-secondary small">No registrados</div>
+                        <div class="col-sm-3">
+                            <div class="text-secondary small">No cumplidos</div>
                             <div class="dashboard-summary-number @(resumenPeriodo.RegistrosNoRegistrados > 0 ? "text-danger" : "text-success")">@resumenPeriodo.RegistrosNoRegistrados</div>
+                        </div>
+                        <div class="col-sm-3">
+                            <div class="text-secondary small">Regularizados fuera de plazo</div>
+                            <div class="dashboard-summary-number @(resumenPeriodo.RegistrosFueraDePlazo > 0 ? "text-danger" : string.Empty)">@resumenPeriodo.RegistrosFueraDePlazo</div>
                         </div>
                     </div>
                 </div>
@@ -199,6 +203,15 @@ else if (Model.ResumenSeleccionado is { } resumen)
         <div class="col-sm-6 col-xl-3">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
+                    <div class="text-secondary small">Fuera de plazo</div>
+                    <div class="dashboard-metric @(resumen.RegistrosFueraDePlazo > 0 ? "text-danger" : string.Empty)">@resumen.RegistrosFueraDePlazo</div>
+                    <div class="text-secondary">No cuentan como cumplimiento</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
                     <div class="text-secondary small">Cumplimiento al momento</div>
                     <div class="dashboard-metric">@(resumen.PorcentajeCumplimiento?.ToString("0.##") is string actual ? $"{actual}%" : "—")</div>
                     <div class="text-secondary">@resumen.CumplidosExigibles de @resumen.HorariosExigibles exigibles</div>
@@ -258,7 +271,12 @@ else if (Model.ResumenSeleccionado is { } resumen)
                                     <td>
                                         @if (horario.RegistroId.HasValue)
                                         {
-                                            <span>@(horario.Puntualidad == EstadoPuntualidad.Tardio ? "Tardío" : "Puntual")</span>
+                                            <span>@(horario.Puntualidad switch
+                                            {
+                                                EstadoPuntualidad.Tardio => "Tardío",
+                                                EstadoPuntualidad.FueraDePlazo => "Fuera de plazo",
+                                                _ => "Puntual"
+                                            })</span>
                                             @if (horario.FueraDeRango)
                                             {
                                                 <span class="badge text-bg-danger ms-1">Alerta</span>

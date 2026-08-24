@@ -120,7 +120,9 @@
                                     <th>Habilitado</th>
                                     <th>Horario</th>
                                     <th>Apertura anticipada</th>
+                                    <th>Tolerancia puntual</th>
                                     <th>Tiempo posterior</th>
+                                    <th>Plazo de regularización</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -151,11 +153,30 @@
                                         </td>
                                         <td>
                                             <div class="input-group">
+                                                <input asp-for="Input.Horarios[indice].MinutosToleranciaPuntualidad"
+                                                       class="form-control schedule-window" min="0" max="720" />
+                                                <span class="input-group-text">minutos</span>
+                                            </div>
+                                            <span asp-validation-for="Input.Horarios[indice].MinutosToleranciaPuntualidad"
+                                                  class="text-danger small"></span>
+                                        </td>
+                                        <td>
+                                            <div class="input-group">
                                                 <input asp-for="Input.Horarios[indice].MinutosDespues"
                                                        class="form-control schedule-window" min="1" max="720" />
                                                 <span class="input-group-text">minutos después</span>
                                             </div>
                                             <span asp-validation-for="Input.Horarios[indice].MinutosDespues"
+                                                  class="text-danger small"></span>
+                                        </td>
+                                        <td>
+                                            <div class="input-group">
+                                                <input asp-for="Input.Horarios[indice].MinutosRegularizacion"
+                                                       class="form-control schedule-window" min="0" max="2880" />
+                                                <span class="input-group-text">minutos</span>
+                                            </div>
+                                            <div class="form-text">Después del cierre; quedará como falta.</div>
+                                            <span asp-validation-for="Input.Horarios[indice].MinutosRegularizacion"
                                                   class="text-danger small"></span>
                                         </td>
                                     </tr>
@@ -178,6 +199,8 @@
                                         <tr>
                                             <th>Horario</th>
                                             <th>Ventana</th>
+                                            <th>Puntualidad</th>
+                                            <th>Regularización</th>
                                             <th>Vigencia</th>
                                         </tr>
                                     </thead>
@@ -187,6 +210,8 @@
                                             <tr>
                                                 <td>@version.Horario</td>
                                                 <td>@version.MinutosAntes min antes / @version.MinutosDespues min después</td>
+                                                <td>@version.MinutosToleranciaPuntualidad min después de la hora</td>
+                                                <td>@version.MinutosRegularizacion min después del cierre</td>
                                                 <td>
                                                     @version.VigenteDesde.ToString("dd/MM/yyyy") –
                                                     @(version.VigenteHasta?.ToString("dd/MM/yyyy") ?? "sin cierre")

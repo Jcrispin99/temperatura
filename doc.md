@@ -54,27 +54,38 @@ Esta configuración es un dato inicial modificable y no una regla fija en el có
 ### Horarios disponibles
 
 - 07:00.
-- 12:00.
+- 13:00.
 - 19:00.
-- 00:00.
+- 01:00.
 
 Ejemplos:
 
 - UMA 1 puede tener cuatro registros diarios.
-- Farmacia tiene tres registros: 07:00, 12:00 y 19:00.
-- UMA 3 tiene tres registros: 07:00, 12:00 y 19:00.
+- Farmacia tiene tres registros: 07:00, 13:00 y 19:00.
+- UMA 3 tiene tres registros: 07:45, 11:00 y 19:00.
 
 Los horarios se asignan por ambiente y no deben programarse directamente en el código.
+
+Las horas son institucionales: se administran en **Administración → Horarios**, aplican a todos los
+ambientes por igual y solo un Supervisor puede modificarlas. Qué rondas debe cumplir cada ambiente
+se sigue definiendo en **Administración → Ambientes → Configurar**.
+
+Al cambiar la hora de una ronda existente, los registros ya guardados conservan su hora real de
+captura (`FechaHoraRegistro`), pero el historial pasa a mostrarlos bajo la hora nueva. Los horarios
+no se eliminan porque los registros históricos los referencian: se desactivan.
 
 ## 3. Día operativo
 
 El primer registro del día operativo es el de las 07:00.
 
-El registro de las 00:00 es el último registro del día operativo anterior. Por ejemplo:
+El registro de las 01:00 es el último registro del día operativo anterior. Por ejemplo:
 
 - Día operativo: 11 de agosto de 2026.
 - Primer horario: 11 de agosto de 2026 a las 07:00.
-- Último horario: 12 de agosto de 2026 a las 00:00.
+- Último horario: 12 de agosto de 2026 a las 01:00.
+
+Una ronda marcada como cierre del día operativo anterior debe ser siempre anterior a la primera
+ronda del día; el sistema rechaza cualquier configuración que rompa esta regla.
 
 Para evitar ambigüedad, cada registro tendrá dos datos diferentes:
 
@@ -88,6 +99,7 @@ Los horarios representan momentos de referencia; no exigen que el registro se re
 Cada asignación de horario a un ambiente tendrá una ventana configurable:
 
 - Apertura inicial: 30 minutos antes de la hora de referencia.
+- Tolerancia inicial de puntualidad: 30 minutos después de la hora de referencia.
 - Cierre inicial: 1 hora después de la hora de referencia.
 
 Estos valores son la configuración inicial del MVP y podrán modificarse posteriormente sin cambiar el código. También será posible definir ventanas diferentes por ambiente y horario.
@@ -95,8 +107,8 @@ Estos valores son la configuración inicial del MVP y podrán modificarse poster
 El estado de puntualidad se determina de esta forma:
 
 - Antes de 30 minutos previos al horario: registro bloqueado.
-- Desde 30 minutos antes y hasta la hora de referencia inclusive: registro permitido y puntual.
-- Después de la hora de referencia y antes de cumplirse una hora: registro permitido y tardío.
+- Desde 30 minutos antes y hasta 30 minutos después de la hora de referencia inclusive: registro permitido y puntual.
+- Después de la tolerancia de puntualidad y antes de cumplirse una hora: registro permitido y tardío.
 - Al cumplirse una hora después del horario: registro bloqueado.
 
 Un registro tardío sigue siendo válido y cuenta para completar el avance diario. Una vez cerrada la ventana no se podrá crear el registro y el horario quedará pendiente o incumplido.
@@ -106,8 +118,8 @@ Ejemplo para el horario de las 07:00:
 | Hora de intento | Resultado |
 | --- | --- |
 | 06:29 | Bloqueado por anticipación |
-| 06:30 a 07:00 | Permitido y puntual |
-| Después de 07:00 y antes de 08:00 | Permitido y tardío |
+| 06:30 a 07:30 | Permitido y puntual |
+| Después de 07:30 y antes de 08:00 | Permitido y tardío |
 | 08:00 en adelante | Bloqueado por cierre |
 
 ## 5. Usuarios y supervisión
@@ -138,8 +150,8 @@ Para facilitar el desarrollo y las pruebas, se cargarán temporalmente los sigui
 
 | Medición | Mínimo demostrativo | Máximo demostrativo | Unidad |
 | --- | ---: | ---: | --- |
-| Temperatura ambiental | 18 | 26 | °C |
-| Humedad relativa | 30 | 70 | % |
+| Temperatura ambiental | 15 | 30 | °C |
+| Humedad relativa | 15 | 65 | % |
 | Temperatura de refrigeración | 2 | 8 | °C |
 
 Estos valores no representan una recomendación clínica ni normativa. Son datos de prueba y deberán ser reemplazados por el responsable antes de utilizar el sistema en una operación real.
@@ -250,6 +262,7 @@ Datos principales:
 - Ambiente.
 - Horario.
 - Minutos permitidos antes de la hora de referencia.
+- Minutos de tolerancia después de la hora para conservar la puntualidad.
 - Minutos permitidos después de la hora de referencia.
 - Fecha de inicio de vigencia.
 - Fecha opcional de fin de vigencia.
@@ -360,7 +373,7 @@ Se recomienda mostrar dos indicadores:
 1. **Avance diario:** completados frente a todos los horarios esperados del día operativo.
 2. **Cumplimiento al momento:** completados frente a los horarios cuya ventana ya comenzó o terminó.
 
-Esto evita que un ambiente parezca incumplido a las 08:00 por no haber realizado todavía los registros de las 12:00, 19:00 y 00:00.
+Esto evita que un ambiente parezca incumplido a las 07:00 por no haber realizado todavía los registros de las 13:00, 19:00 y 01:00.
 
 Los registros tardíos cuentan para el avance diario, pero deben poder distinguirse en reportes futuros.
 

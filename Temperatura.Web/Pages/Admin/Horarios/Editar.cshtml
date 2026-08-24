@@ -1,0 +1,70 @@
+@page "{id:int}"
+@model Temperatura.Web.Pages.Admin.Horarios.EditarModel
+@{
+    ViewData["Title"] = "Editar horario";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="mb-4">
+            <a asp-page="Index" class="text-decoration-none">← Volver a horarios</a>
+            <h1 class="h2 mt-2 mb-1">Editar horario</h1>
+            <p class="text-secondary">
+                Lo usan @Model.AmbientesQueLoUsan ambiente(s) y tiene @Model.RegistrosHistoricos registro(s) guardado(s).
+            </p>
+        </div>
+
+        <form method="post" class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Input.HoraReferencia" class="form-label">Hora de referencia</label>
+                    <input asp-for="Input.HoraReferencia" type="time" asp-format="{0:HH\:mm}"
+                           class="form-control" autofocus />
+                    <span asp-validation-for="Input.HoraReferencia" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Input.Nombre" class="form-label">Nombre <span class="text-secondary">(opcional)</span></label>
+                    <input asp-for="Input.Nombre" class="form-control" placeholder="Se usa la hora si lo dejas vacío" />
+                    <span asp-validation-for="Input.Nombre" class="text-danger small"></span>
+                </div>
+
+                <div class="form-check mb-2">
+                    <input asp-for="Input.EsCierreDiaOperativoAnterior" class="form-check-input" />
+                    <label asp-for="Input.EsCierreDiaOperativoAnterior" class="form-check-label">
+                        Cierra el día operativo anterior
+                    </label>
+                    <div class="form-text">
+                        Debe ser anterior a la primera ronda del día.
+                    </div>
+                    <span asp-validation-for="Input.EsCierreDiaOperativoAnterior" class="text-danger small"></span>
+                </div>
+
+                <div class="form-check">
+                    <input asp-for="Input.Activo" class="form-check-input" />
+                    <label asp-for="Input.Activo" class="form-check-label">Activo</label>
+                    <span asp-validation-for="Input.Activo" class="text-danger small"></span>
+                </div>
+
+                @if (Model.RegistrosHistoricos > 0)
+                {
+                    <div class="alert alert-warning mt-3 mb-0" role="alert">
+                        Cambiar la hora reescribe cómo se muestran los @Model.RegistrosHistoricos registro(s)
+                        ya guardados de esta ronda: el historial pasará a mostrarlos con la hora nueva.
+                        La hora real en que se tomó cada lectura no se altera.
+                    </div>
+                }
+            </div>
+            <div class="card-footer bg-white d-flex justify-content-end gap-2 p-3">
+                <a asp-page="Index" class="btn btn-outline-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary">Guardar cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -39,14 +39,14 @@ public sealed class ResumenAvanceService(ApplicationDbContext context) : IResume
         var ids = ambienteIds.Distinct().ToArray();
         if (ids.Length == 0)
         {
-            return new ResumenAvancePeriodo(0, 0, 0, 0, 0, []);
+            return new ResumenAvancePeriodo(0, 0, 0, 0, 0, 0, []);
         }
 
         var ambientes = await _context.Ambientes
             .AsNoTracking()
             .Where(x => ids.Contains(x.Id))
             .OrderBy(x => x.Nombre)
-            .Select(x => new AmbienteResumen(x.Id, x.Nombre, 0, 0, 0))
+            .Select(x => new AmbienteResumen(x.Id, x.Nombre, 0, 0, 0, 0))
             .ToListAsync(cancellationToken);
 
         var configuraciones = await _context.AmbientesHorarios
@@ -87,11 +87,17 @@ public sealed class ResumenAvanceService(ApplicationDbContext context) : IResume
                 x.FechaOperativa >= fechaDesde &&
                 x.FechaOperativa <= fechaHasta &&
                 x.Estado == EstadoRegistro.Confirmado)
-            .Select(x => new { x.AmbienteId, x.FechaOperativa, x.HorarioId })
+            .Select(x => new { x.AmbienteId, x.FechaOperativa, x.HorarioId, x.Puntualidad })
             .ToListAsync(cancellationToken);
 
         var completadosPorAmbiente = registros
-            .Where(x => esperados.Contains((x.AmbienteId, x.FechaOperativa, x.HorarioId)))
+            .Where(x => x.Puntualidad != EstadoPuntualidad.FueraDePlazo &&
+                        esperados.Contains((x.AmbienteId, x.FechaOperativa, x.HorarioId)))
+            .GroupBy(x => x.AmbienteId)
+            .ToDictionary(x => x.Key, x => x.Count());
+        var fueraDePlazoPorAmbiente = registros
+            .Where(x => x.Puntualidad == EstadoPuntualidad.FueraDePlazo &&
+                        esperados.Contains((x.AmbienteId, x.FechaOperativa, x.HorarioId)))
             .GroupBy(x => x.AmbienteId)
             .ToDictionary(x => x.Key, x => x.Count());
         var esperadosPorAmbiente = esperados
@@ -103,6 +109,7 @@ public sealed class ResumenAvanceService(ApplicationDbContext context) : IResume
             {
                 var esperadosAmbiente = esperadosPorAmbiente.GetValueOrDefault(ambiente.AmbienteId);
                 var completadosAmbiente = completadosPorAmbiente.GetValueOrDefault(ambiente.AmbienteId);
+                var fueraDePlazoAmbiente = fueraDePlazoPorAmbiente.GetValueOrDefault(ambiente.AmbienteId);
                 var noRegistrados = Math.Max(esperadosAmbiente - completadosAmbiente, 0);
                 var porcentaje = CalcularPorcentaje(completadosAmbiente, esperadosAmbiente);
 
@@ -110,6 +117,7 @@ public sealed class ResumenAvanceService(ApplicationDbContext context) : IResume
                 {
                     RegistrosEsperados = esperadosAmbiente,
                     RegistrosCompletados = completadosAmbiente,
+                    RegistrosFueraDePlazo = fueraDePlazoAmbiente,
                     PorcentajeAvance = porcentaje
                 };
             })
@@ -117,11 +125,13 @@ public sealed class ResumenAvanceService(ApplicationDbContext context) : IResume
 
         var esperadosTotal = resumenes.Sum(x => x.RegistrosEsperados);
         var completadosTotal = resumenes.Sum(x => x.RegistrosCompletados);
+        var fueraDePlazoTotal = resumenes.Sum(x => x.RegistrosFueraDePlazo);
         return new ResumenAvancePeriodo(
             resumenes.Count,
             esperadosTotal,
             completadosTotal,
             Math.Max(esperadosTotal - completadosTotal, 0),
+            fueraDePlazoTotal,
             CalcularPorcentaje(completadosTotal, esperadosTotal),
             resumenes);
     }
@@ -135,6 +145,7 @@ public sealed record ResumenAvancePeriodo(
     int RegistrosEsperados,
     int RegistrosCompletados,
     int RegistrosNoRegistrados,
+    int RegistrosFueraDePlazo,
     decimal PorcentajeAvance,
     IReadOnlyList<AmbienteResumen> Ambientes);
 
@@ -143,4 +154,5 @@ public sealed record AmbienteResumen(
     string Ambiente,
     int RegistrosEsperados,
     int RegistrosCompletados,
+    int RegistrosFueraDePlazo,
     decimal PorcentajeAvance);

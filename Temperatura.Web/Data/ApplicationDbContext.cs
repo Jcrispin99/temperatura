@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Temperatura.Web.Domain;
+using Temperatura.Web.Domain.Enums;
 
 namespace Temperatura.Web.Data;
 
@@ -160,11 +161,17 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             {
                 table.HasCheckConstraint(
                     "CK_AmbientesHorarios_Ventana",
-                    "[MinutosAntes] >= 0 AND [MinutosDespues] > 0");
+                    "[MinutosAntes] >= 0 AND [MinutosDespues] > 0 " +
+                    "AND [MinutosToleranciaPuntualidad] >= 0 " +
+                    "AND [MinutosToleranciaPuntualidad] <= [MinutosDespues] " +
+                    "AND [MinutosRegularizacion] BETWEEN 0 AND 2880");
                 table.HasCheckConstraint(
                     "CK_AmbientesHorarios_Vigencia",
                     "[VigenteHasta] IS NULL OR [VigenteHasta] >= [VigenteDesde]");
             });
+
+            entity.Property(x => x.MinutosRegularizacion)
+                .HasDefaultValue(AmbienteHorario.MinutosRegularizacionPredeterminados);
 
             entity.HasIndex(x => new { x.AmbienteId, x.HorarioId, x.VigenteDesde }).IsUnique();
             entity.HasIndex(x => new { x.AmbienteId, x.HorarioId })
@@ -190,6 +197,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.ToTable("Registros");
             entity.Property(x => x.Estado).HasConversion<string>().HasMaxLength(20);
             entity.Property(x => x.Puntualidad).HasConversion<string>().HasMaxLength(20);
+            entity.Property(x => x.MotivoFueraDePlazo).HasMaxLength(500);
             entity.HasIndex(x => new { x.AmbienteId, x.HorarioId, x.FechaOperativa }).IsUnique();
             entity.HasIndex(x => new { x.FechaOperativa, x.AmbienteId });
 
@@ -220,6 +228,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.Property(x => x.LimiteMinimoAplicado).HasPrecision(9, 2);
             entity.Property(x => x.LimiteMaximoAplicado).HasPrecision(9, 2);
             entity.Property(x => x.EstadoRango).HasConversion<string>().HasMaxLength(20);
+            entity.Property(x => x.Observacion).HasMaxLength(500);
             entity.HasIndex(x => new { x.RegistroId, x.TipoMedicionId }).IsUnique();
 
             entity.HasOne(x => x.Registro)
@@ -268,9 +277,18 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         {
             entity.ToTable("AlertasRegistrosOmitidos");
             entity.Property(x => x.Estado).HasConversion<string>().HasMaxLength(20);
+            entity.Property(x => x.EstadoIncidencia)
+                .HasConversion<string>()
+                .HasMaxLength(30);
             entity.Property(x => x.UltimoError).HasMaxLength(1000);
+            entity.Property(x => x.RevisadoPorUsuarioId).HasMaxLength(450);
+            entity.Property(x => x.ComentarioRevision).HasMaxLength(1000);
             entity.HasIndex(x => new { x.FechaOperativa, x.AmbienteId, x.HorarioId }).IsUnique();
             entity.HasIndex(x => x.Estado);
+            entity.HasIndex(x => x.EstadoIncidencia);
+            entity.HasIndex(x => x.RegistroRegularizacionId)
+                .IsUnique()
+                .HasFilter("[RegistroRegularizacionId] IS NOT NULL");
 
             entity.HasOne(x => x.Ambiente)
                 .WithMany()
@@ -280,6 +298,16 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.HasOne(x => x.Horario)
                 .WithMany()
                 .HasForeignKey(x => x.HorarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.RegistroRegularizacion)
+                .WithOne(x => x.IncidenciaRegularizada)
+                .HasForeignKey<AlertaRegistroOmitido>(x => x.RegistroRegularizacionId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.RevisadoPorUsuario)
+                .WithMany()
+                .HasForeignKey(x => x.RevisadoPorUsuarioId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }
@@ -333,8 +361,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             new Horario
             {
                 Id = 2,
-                Nombre = "12:00",
-                HoraReferencia = new TimeOnly(12, 0),
+                Nombre = "13:00",
+                HoraReferencia = new TimeOnly(13, 0),
                 EsCierreDiaOperativoAnterior = false,
                 Activo = true
             },
@@ -349,8 +377,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             new Horario
             {
                 Id = 4,
-                Nombre = "00:00",
-                HoraReferencia = new TimeOnly(0, 0),
+                Nombre = "01:00",
+                HoraReferencia = new TimeOnly(1, 0),
                 EsCierreDiaOperativoAnterior = true,
                 Activo = true
             });
@@ -363,18 +391,18 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     {
         return
         [
-            CrearAmbienteMedicion(1, 1, 1, 18m, 26m, vigenteDesde),
-            CrearAmbienteMedicion(2, 1, 2, 30m, 70m, vigenteDesde),
+            CrearAmbienteMedicion(1, 1, 1, 15m, 30m, vigenteDesde),
+            CrearAmbienteMedicion(2, 1, 2, 15m, 65m, vigenteDesde),
             CrearAmbienteMedicion(3, 1, 3, 2m, 8m, vigenteDesde),
             CrearAmbienteMedicion(4, 2, 3, 2m, 8m, vigenteDesde),
-            CrearAmbienteMedicion(5, 3, 1, 18m, 26m, vigenteDesde),
-            CrearAmbienteMedicion(6, 3, 2, 30m, 70m, vigenteDesde),
+            CrearAmbienteMedicion(5, 3, 1, 15m, 30m, vigenteDesde),
+            CrearAmbienteMedicion(6, 3, 2, 15m, 65m, vigenteDesde),
             CrearAmbienteMedicion(7, 3, 3, 2m, 8m, vigenteDesde),
-            CrearAmbienteMedicion(8, 4, 1, 18m, 26m, vigenteDesde),
-            CrearAmbienteMedicion(9, 4, 2, 30m, 70m, vigenteDesde),
+            CrearAmbienteMedicion(8, 4, 1, 15m, 30m, vigenteDesde),
+            CrearAmbienteMedicion(9, 4, 2, 15m, 65m, vigenteDesde),
             CrearAmbienteMedicion(10, 4, 3, 2m, 8m, vigenteDesde),
-            CrearAmbienteMedicion(11, 5, 1, 18m, 26m, vigenteDesde),
-            CrearAmbienteMedicion(12, 5, 2, 30m, 70m, vigenteDesde),
+            CrearAmbienteMedicion(11, 5, 1, 15m, 30m, vigenteDesde),
+            CrearAmbienteMedicion(12, 5, 2, 15m, 65m, vigenteDesde),
             CrearAmbienteMedicion(13, 5, 3, 2m, 8m, vigenteDesde)
         ];
     }
@@ -416,8 +444,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 Id = indice + 1,
                 AmbienteId = asignacion.AmbienteId,
                 HorarioId = asignacion.HorarioId,
-                MinutosAntes = 30,
-                MinutosDespues = 60,
+                MinutosAntes = AmbienteHorario.MinutosAntesPredeterminados,
+                MinutosToleranciaPuntualidad =
+                    AmbienteHorario.MinutosToleranciaPuntualidadPredeterminados,
+                MinutosDespues = AmbienteHorario.MinutosDespuesPredeterminados,
+                MinutosRegularizacion = AmbienteHorario.MinutosRegularizacionPredeterminados,
                 VigenteDesde = vigenteDesde,
                 Activo = true
             })

@@ -60,6 +60,7 @@
                     <option value="">Todos</option>
                     <option value="@EstadoPuntualidad.Puntual">Puntual</option>
                     <option value="@EstadoPuntualidad.Tardio">Tardío</option>
+                    <option value="@EstadoPuntualidad.FueraDePlazo">Fuera de plazo</option>
                 </select>
             </div>
             <div class="col-sm-6 col-xl-3">
@@ -117,8 +118,8 @@
                             </td>
                             <td>@registro.FechaHoraRegistro.ToString("dd/MM/yyyy HH:mm")</td>
                             <td>
-                                <span class="badge @(registro.Puntualidad == EstadoPuntualidad.Puntual ? "text-bg-success" : "text-bg-warning")">
-                                    @(registro.Puntualidad == EstadoPuntualidad.Puntual ? "Puntual" : "Tardío")
+                                <span class="badge @ClasePuntualidad(registro.Puntualidad)">
+                                    @EtiquetaPuntualidad(registro.Puntualidad)
                                 </span>
                                 <span class="badge @(registro.FueraDeRango ? "text-bg-danger" : "text-bg-azure")">
                                     @(registro.FueraDeRango ? "Fuera de rango" : "Dentro de rango")
@@ -149,6 +150,20 @@
 </div>
 
 @functions {
+    private static string ClasePuntualidad(EstadoPuntualidad puntualidad) => puntualidad switch
+    {
+        EstadoPuntualidad.Puntual => "text-bg-success",
+        EstadoPuntualidad.Tardio => "text-bg-warning",
+        _ => "text-bg-danger"
+    };
+
+    private static string EtiquetaPuntualidad(EstadoPuntualidad puntualidad) => puntualidad switch
+    {
+        EstadoPuntualidad.Puntual => "Puntual",
+        EstadoPuntualidad.Tardio => "Tardío",
+        _ => "Fuera de plazo"
+    };
+
     private Dictionary<string, string?> RouteDataForPage(int pagina) => new()
     {
         [nameof(Model.FechaDesde)] = Model.FechaDesde?.ToString("yyyy-MM-dd"),

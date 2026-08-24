@@ -168,7 +168,9 @@ public class EditarModel(
             .Select(x => new HorarioHistorico(
                 x.Horario.Nombre,
                 x.MinutosAntes,
+                x.MinutosToleranciaPuntualidad,
                 x.MinutosDespues,
+                x.MinutosRegularizacion,
                 x.VigenteDesde,
                 x.VigenteHasta))
             .ToListAsync();
@@ -229,7 +231,9 @@ public class EditarModel(
                 EsCierreDiaOperativoAnterior = horario.EsCierreDiaOperativoAnterior,
                 Habilitado = enviado?.Habilitado ?? false,
                 MinutosAntes = enviado?.MinutosAntes,
-                MinutosDespues = enviado?.MinutosDespues
+                MinutosToleranciaPuntualidad = enviado?.MinutosToleranciaPuntualidad,
+                MinutosDespues = enviado?.MinutosDespues,
+                MinutosRegularizacion = enviado?.MinutosRegularizacion
             };
         }).ToList();
     }
@@ -289,6 +293,27 @@ public class EditarModel(
                 ModelState.AddModelError(
                     $"Input.Horarios[{indice}].MinutosDespues",
                     "Ingresa entre 1 y 720 minutos.");
+            }
+
+            if (horario.MinutosToleranciaPuntualidad is null or < 0 or > 720)
+            {
+                ModelState.AddModelError(
+                    $"Input.Horarios[{indice}].MinutosToleranciaPuntualidad",
+                    "Ingresa entre 0 y 720 minutos.");
+            }
+            else if (horario.MinutosDespues.HasValue &&
+                     horario.MinutosToleranciaPuntualidad > horario.MinutosDespues)
+            {
+                ModelState.AddModelError(
+                    $"Input.Horarios[{indice}].MinutosToleranciaPuntualidad",
+                    "La tolerancia puntual no puede superar el tiempo posterior de la ventana.");
+            }
+
+            if (horario.MinutosRegularizacion is null or < 0 or > 2880)
+            {
+                ModelState.AddModelError(
+                    $"Input.Horarios[{indice}].MinutosRegularizacion",
+                    "Ingresa entre 0 y 2880 minutos.");
             }
         }
     }
@@ -395,10 +420,14 @@ public class EditarModel(
         }
 
         var minutosAntes = horario.MinutosAntes!.Value;
+        var minutosToleranciaPuntualidad = horario.MinutosToleranciaPuntualidad!.Value;
         var minutosDespues = horario.MinutosDespues!.Value;
+        var minutosRegularizacion = horario.MinutosRegularizacion!.Value;
         if (configuracionActiva is not null &&
             configuracionActiva.MinutosAntes == minutosAntes &&
-            configuracionActiva.MinutosDespues == minutosDespues)
+            configuracionActiva.MinutosToleranciaPuntualidad == minutosToleranciaPuntualidad &&
+            configuracionActiva.MinutosDespues == minutosDespues &&
+            configuracionActiva.MinutosRegularizacion == minutosRegularizacion)
         {
             return;
         }
@@ -406,7 +435,9 @@ public class EditarModel(
         if (configuracionActiva is not null && configuracionActiva.VigenteDesde >= fechaActual)
         {
             configuracionActiva.MinutosAntes = minutosAntes;
+            configuracionActiva.MinutosToleranciaPuntualidad = minutosToleranciaPuntualidad;
             configuracionActiva.MinutosDespues = minutosDespues;
+            configuracionActiva.MinutosRegularizacion = minutosRegularizacion;
             configuracionActiva.VigenteHasta = null;
             return;
         }
@@ -421,7 +452,9 @@ public class EditarModel(
         if (configuracionDelDia is not null)
         {
             configuracionDelDia.MinutosAntes = minutosAntes;
+            configuracionDelDia.MinutosToleranciaPuntualidad = minutosToleranciaPuntualidad;
             configuracionDelDia.MinutosDespues = minutosDespues;
+            configuracionDelDia.MinutosRegularizacion = minutosRegularizacion;
             configuracionDelDia.VigenteHasta = null;
             configuracionDelDia.Activo = true;
             return;
@@ -432,7 +465,9 @@ public class EditarModel(
             AmbienteId = ambienteId,
             HorarioId = horario.HorarioId,
             MinutosAntes = minutosAntes,
+            MinutosToleranciaPuntualidad = minutosToleranciaPuntualidad,
             MinutosDespues = minutosDespues,
+            MinutosRegularizacion = minutosRegularizacion,
             VigenteDesde = fechaActual,
             Activo = true
         });
@@ -446,8 +481,12 @@ public class EditarModel(
             Nombre = horario.Nombre,
             EsCierreDiaOperativoAnterior = horario.EsCierreDiaOperativoAnterior,
             Habilitado = configuracion is not null,
-            MinutosAntes = configuracion?.MinutosAntes ?? 30,
-            MinutosDespues = configuracion?.MinutosDespues ?? 60
+            MinutosAntes = configuracion?.MinutosAntes ?? AmbienteHorario.MinutosAntesPredeterminados,
+            MinutosToleranciaPuntualidad = configuracion?.MinutosToleranciaPuntualidad ??
+                AmbienteHorario.MinutosToleranciaPuntualidadPredeterminados,
+            MinutosDespues = configuracion?.MinutosDespues ?? AmbienteHorario.MinutosDespuesPredeterminados,
+            MinutosRegularizacion = configuracion?.MinutosRegularizacion ??
+                AmbienteHorario.MinutosRegularizacionPredeterminados
         };
     }
 
@@ -494,13 +533,19 @@ public class EditarModel(
 
         public short? MinutosAntes { get; set; }
 
+        public short? MinutosToleranciaPuntualidad { get; set; }
+
         public short? MinutosDespues { get; set; }
+
+        public short? MinutosRegularizacion { get; set; }
     }
 
     public sealed record HorarioHistorico(
         string Horario,
         short MinutosAntes,
+        short MinutosToleranciaPuntualidad,
         short MinutosDespues,
+        short MinutosRegularizacion,
         DateOnly VigenteDesde,
         DateOnly? VigenteHasta);
 }

@@ -1,0 +1,333 @@
+@page "/Graficas"
+@using Temperatura.Web.Domain.Enums
+@using Temperatura.Web.Pages.Graficas
+@using Temperatura.Web.Services
+@model Temperatura.Web.Pages.Graficas.IndexModel
+@{
+    ViewData["Title"] = "Gráficas";
+    var cantidadAmbientesSeleccionados = Model.AmbienteIds?.Length ?? 0;
+    var etiquetaAmbientes = cantidadAmbientesSeleccionados == Model.Ambientes.Count && Model.Ambientes.Count > 0
+        ? "Todos los ambientes"
+        : cantidadAmbientesSeleccionados == 1
+            ? Model.Ambientes.FirstOrDefault(x => Model.AmbienteIds!.Contains(x.Id))?.Nombre ?? "1 ambiente seleccionado"
+            : $"{cantidadAmbientesSeleccionados} ambientes seleccionados";
+}
+
+<div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
+    <div>
+        <span class="badge text-bg-primary mb-2">Análisis</span>
+        <h1 class="h2 mb-1">Tendencias de temperatura y humedad</h1>
+        <p class="text-secondary mb-0">
+            @if (Model.Modo == ModoVisualizacionGrafica.DetalleHorarios)
+            {
+                <text>Cada línea representa un ambiente y cada columna uno de los horarios del día.</text>
+            }
+            else
+            {
+                <text>Cada línea representa un ambiente y cada punto el promedio del día operativo.</text>
+            }
+        </p>
+    </div>
+    <a asp-page="/Registros/Historial/Index"
+       asp-route-FechaDesde="@Model.FechaDesde.ToString("yyyy-MM-dd")"
+       asp-route-FechaHasta="@Model.FechaHasta.ToString("yyyy-MM-dd")"
+       class="btn btn-outline-secondary">
+        Ver historial
+    </a>
+</div>
+
+<form method="get" id="filtros-graficas" class="card border-0 shadow-sm dashboard-filter-card mb-4">
+    <div class="card-body p-3 p-lg-4">
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        }
+        <div class="row g-3 align-items-end">
+            <div class="col-lg-6 col-xl-3">
+                <label class="form-label">Visualización</label>
+                <div class="btn-group w-100" role="group" aria-label="Modo de visualización">
+                    <input type="radio"
+                           class="btn-check"
+                           name="Modo"
+                           value="PromedioDiario"
+                           id="modo-grafica-promedio"
+                           data-visualization-mode
+                           checked="@(Model.Modo == ModoVisualizacionGrafica.PromedioDiario)" />
+                    <label class="btn btn-outline-primary" for="modo-grafica-promedio">Promedio</label>
+                    <input type="radio"
+                           class="btn-check"
+                           name="Modo"
+                           value="DetalleHorarios"
+                           id="modo-grafica-horarios"
+                           data-visualization-mode
+                           checked="@(Model.Modo == ModoVisualizacionGrafica.DetalleHorarios)" />
+                    <label class="btn btn-outline-primary" for="modo-grafica-horarios">4 horarios</label>
+                </div>
+            </div>
+            <div class="col-lg-6 col-xl-3 @(Model.Modo == ModoVisualizacionGrafica.DetalleHorarios ? "d-none" : string.Empty)"
+                 data-period-selector>
+                <label class="form-label">Período</label>
+                <div class="btn-group w-100" role="group" aria-label="Período de las gráficas">
+                    <input type="radio"
+                           class="btn-check"
+                           name="Periodo"
+                           value="Semanal"
+                           id="periodo-grafica-semanal"
+                           checked="@(Model.Periodo == PeriodoDashboard.Semanal)" />
+                    <label class="btn btn-outline-primary" for="periodo-grafica-semanal">Semanal</label>
+                    <input type="radio"
+                           class="btn-check"
+                           name="Periodo"
+                           value="Mensual"
+                           id="periodo-grafica-mensual"
+                           checked="@(Model.Periodo == PeriodoDashboard.Mensual)" />
+                    <label class="btn btn-outline-primary" for="periodo-grafica-mensual">Mensual</label>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-2">
+                <label asp-for="Fecha" class="form-label">Fecha de referencia</label>
+                <input asp-for="Fecha" type="date" class="form-control" />
+            </div>
+            <div class="col-md-6 col-xl-3">
+                <label class="form-label" for="selector-ambientes-boton">Ambientes</label>
+                <div class="dropdown environment-selector" data-environment-selector>
+                    <button id="selector-ambientes-boton"
+                            type="button"
+                            class="form-select environment-selector-toggle text-start"
+                            data-bs-toggle="dropdown"
+                            data-bs-auto-close="outside"
+                            aria-expanded="false"
+                            aria-describedby="ambientes-graficas-ayuda ambientes-graficas-error">
+                        <span data-environment-selector-label>@etiquetaAmbientes</span>
+                    </button>
+                    <div class="dropdown-menu environment-selector-menu shadow-sm">
+                        <div class="environment-selector-toolbar">
+                            <span class="fw-semibold small">Seleccionar ambientes</span>
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Acciones de selección">
+                                <button type="button" class="btn btn-outline-primary" data-environment-select-all>Todos</button>
+                                <button type="button" class="btn btn-outline-secondary" data-environment-clear>Limpiar</button>
+                            </div>
+                        </div>
+                        <div class="environment-selector-options">
+                            @foreach (var ambiente in Model.Ambientes)
+                            {
+                                <label class="environment-selector-option" for="ambiente-grafica-@ambiente.Id">
+                                    <input id="ambiente-grafica-@ambiente.Id"
+                                           type="checkbox"
+                                           name="AmbienteIds"
+                                           value="@ambiente.Id"
+                                           class="form-check-input"
+                                           data-environment-checkbox
+                                           checked="@(Model.AmbienteIds?.Contains(ambiente.Id) == true)" />
+                                    <span class="flex-fill text-truncate">@ambiente.Nombre</span>
+                                    @if (!ambiente.Activo)
+                                    {
+                                        <span class="badge text-bg-secondary">Inactivo</span>
+                                    }
+                                </label>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div id="ambientes-graficas-ayuda" class="form-hint">Selecciona uno, varios o todos los ambientes.</div>
+                <div id="ambientes-graficas-error" class="invalid-feedback" data-environment-selector-error>
+                    Selecciona al menos un ambiente.
+                </div>
+            </div>
+            <div class="col-xl-1 d-grid">
+                <button type="submit" class="btn btn-primary">Aplicar</button>
+            </div>
+        </div>
+    </div>
+    <div class="card-footer d-flex flex-wrap align-items-center gap-2">
+        <span class="badge text-bg-primary">@Model.TituloPeriodo</span>
+        <span class="text-secondary">
+            @if (Model.Modo == ModoVisualizacionGrafica.DetalleHorarios)
+            {
+                <text>Mañana · Tarde · Noche · Medianoche</text>
+            }
+            else
+            {
+                <text>@Model.FechaDesde.ToString("dd/MM/yyyy") – @Model.FechaHasta.ToString("dd/MM/yyyy")</text>
+            }
+        </span>
+    </div>
+</form>
+
+@if (Model.Ambientes.Count == 0)
+{
+    <div class="empty card border-0 shadow-sm py-5">
+        <div class="empty-header">Sin ambientes</div>
+        <p class="empty-title">No tienes ambientes disponibles</p>
+        <p class="empty-subtitle text-secondary">Solicita al supervisor que revise tu configuración.</p>
+    </div>
+}
+else
+{
+    <section class="card border-0 shadow-sm chart-tabs-card" aria-label="Gráficas de mediciones">
+        <div class="card-header chart-tabs-header">
+            <ul class="nav nav-tabs card-header-tabs chart-tabs-nav" role="tablist">
+                @for (var indice = 0; indice < Model.Graficas.Count; indice++)
+                {
+                    var grafica = Model.Graficas[indice];
+                    var activa = indice == 0;
+                    <li class="nav-item" role="presentation">
+                        <button id="grafica-tab-@grafica.TipoMedicionId"
+                                type="button"
+                                class="nav-link @(activa ? "active" : string.Empty)"
+                                data-bs-toggle="tab"
+                                data-bs-target="#grafica-panel-@grafica.TipoMedicionId"
+                                role="tab"
+                                aria-controls="grafica-panel-@grafica.TipoMedicionId"
+                                aria-selected="@(activa ? "true" : "false")">
+                            @grafica.Nombre
+                        </button>
+                    </li>
+                }
+            </ul>
+        </div>
+        <div class="card-body chart-tabs-body">
+            <div class="tab-content">
+                @for (var indice = 0; indice < Model.Graficas.Count; indice++)
+                {
+                    var grafica = Model.Graficas[indice];
+                    var activa = indice == 0;
+                    var gruposObservaciones = Model.ObtenerObservacionesPorTipo(grafica.TipoMedicionId);
+                    var totalObservaciones = gruposObservaciones.Sum(x => x.Observaciones.Count);
+                    <div id="grafica-panel-@grafica.TipoMedicionId"
+                         class="tab-pane fade @(activa ? "show active" : string.Empty)"
+                         role="tabpanel"
+                         aria-labelledby="grafica-tab-@grafica.TipoMedicionId"
+                         tabindex="0">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                            <h2 class="h4 mb-0">@grafica.Nombre</h2>
+                            <div class="d-flex flex-wrap gap-2">
+                                <span class="badge text-bg-primary">
+                                    @(grafica.EsPromedioDiario ? "Promedio diario" : "Detalle por horario")
+                                </span>
+                                <span class="badge text-bg-light">Unidad: @grafica.Unidad</span>
+                            </div>
+                        </div>
+                        @if (grafica.Puntos.Count == 0)
+                        {
+                            <div class="chart-empty-state">
+                                <div class="fw-semibold">Sin mediciones en este período</div>
+                                <div class="text-secondary small">Prueba con otras fechas, ambientes u horario.</div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="chart-container">
+                                <canvas data-medicion-chart="@grafica.TipoMedicionId"
+                                        role="img"
+                                        aria-label="Gráfica de @grafica.Nombre por ambiente"></canvas>
+                            </div>
+                            <div class="chart-help text-secondary small mt-2">
+                                @if (grafica.EsPromedioDiario)
+                                {
+                                    <text>Los triángulos indican alertas de rango y los rombos promedios diarios incompletos.</text>
+                                }
+                                else
+                                {
+                                    <text>Los cuatro valores del día permanecen visibles; los triángulos indican alertas de rango.</text>
+                                }
+                                Usa la leyenda para mostrar u ocultar ambientes.
+                            </div>
+                        }
+
+                        <section class="observations-section"
+                                 aria-labelledby="observaciones-titulo-@grafica.TipoMedicionId">
+                            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-end gap-2 mb-3">
+                                <div>
+                                    <h3 id="observaciones-titulo-@grafica.TipoMedicionId" class="h4 mb-1">
+                                        Observaciones de @grafica.Nombre
+                                    </h3>
+                                    <p class="text-secondary small mb-0">
+                                        @Model.TituloPeriodo · @Model.FechaDesde.ToString("dd/MM/yyyy") al @Model.FechaHasta.ToString("dd/MM/yyyy")
+                                    </p>
+                                </div>
+                                <span class="badge text-bg-light observations-count">
+                                    @totalObservaciones @(totalObservaciones == 1 ? "observación" : "observaciones")
+                                </span>
+                            </div>
+
+                            @if (gruposObservaciones.Count == 0)
+                            {
+                                <div class="observation-empty-state">
+                                    <div class="fw-semibold">No se encontraron observaciones para esta medición</div>
+                                    <div class="text-secondary small">Los registros del período seleccionado no contienen observaciones.</div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="row g-3">
+                                    @foreach (var grupo in gruposObservaciones)
+                                    {
+                                        <div class="col-xl-6">
+                                            <article class="card border-0 observation-environment-card h-100"
+                                                     style="--environment-color: @grupo.Color;">
+                                                <div class="card-header observation-environment-header">
+                                                    <div class="d-flex align-items-center gap-2 min-w-0">
+                                                        <span class="environment-color-dot" aria-hidden="true"></span>
+                                                        <h4 class="card-title mb-0 text-truncate">@grupo.Ambiente</h4>
+                                                    </div>
+                                                    <span class="badge text-bg-light">@grupo.Observaciones.Count</span>
+                                                </div>
+                                                <div class="list-group list-group-flush">
+                                                    @foreach (var observacion in grupo.Observaciones)
+                                                    {
+                                                        <div class="list-group-item observation-item">
+                                                            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+                                                                <div>
+                                                                    <div class="fw-semibold">@observacion.Medicion</div>
+                                                                    <div class="small text-secondary">
+                                                                        @observacion.FechaHora.ToString("dd/MM/yyyy HH:mm") · Horario @observacion.Horario
+                                                                    </div>
+                                                                </div>
+                                                                @if (observacion.EstadoRango == EstadoRango.DentroDeRango)
+                                                                {
+                                                                    <span class="badge text-bg-success">Dentro de rango</span>
+                                                                }
+                                                                else if (observacion.EstadoRango == EstadoRango.PorDebajo)
+                                                                {
+                                                                    <span class="badge text-bg-danger">Por debajo</span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <span class="badge text-bg-danger">Por encima</span>
+                                                                }
+                                                            </div>
+                                                            <div class="small mb-2">
+                                                                <span class="fw-semibold">@observacion.Valor.ToString("0.##") @observacion.Unidad</span>
+                                                                <span class="text-secondary">
+                                                                    · Rango @observacion.LimiteMinimo.ToString("0.##")–@observacion.LimiteMaximo.ToString("0.##") @observacion.Unidad
+                                                                </span>
+                                                            </div>
+                                                            <p class="observation-text mb-2">@observacion.Observacion</p>
+                                                            <a asp-page="/Registros/Historial/Detalle"
+                                                               asp-route-id="@observacion.RegistroId"
+                                                               class="small fw-semibold">
+                                                                Ver registro completo
+                                                            </a>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </article>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </section>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    <script id="datos-graficas" type="application/json">@Html.Raw(Model.DatosGraficasJson)</script>
+}
+
+@section Scripts {
+    <script src="~/lib/chartjs/chart.umd.js"></script>
+    <script src="~/js/graficas.js" asp-append-version="true"></script>
+}

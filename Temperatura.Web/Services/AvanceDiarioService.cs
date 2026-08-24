@@ -46,12 +46,15 @@ public sealed class AvanceDiarioService(
                 (x.VigenteHasta == null || x.VigenteHasta >= ayer))
             .ToListAsync(cancellationToken);
 
+        var horaInicioPredeterminada = await ObtenerHoraInicioPredeterminadaAsync(cancellationToken);
+
         var fechasPorAmbiente = ambientes.ToDictionary(
             x => x.Id,
             x => DeterminarFechaOperativa(
                 configuraciones.Where(y => y.AmbienteId == x.Id).ToList(),
                 hoy,
-                ahora));
+                ahora,
+                horaInicioPredeterminada));
         var fechas = fechasPorAmbiente.Values.Distinct().ToArray();
 
         var registros = await _context.Registros
@@ -98,7 +101,11 @@ public sealed class AvanceDiarioService(
                     apertura,
                     referencia,
                     cierre,
-                    AvanceDiarioCalculator.ObtenerEstado(registro is not null, ahora, apertura, cierre),
+                    AvanceDiarioCalculator.ObtenerEstado(
+                        registro is not null && registro.Puntualidad != EstadoPuntualidad.FueraDePlazo,
+                        ahora,
+                        apertura,
+                        cierre),
                     registro?.Id,
                     registro?.FechaHoraRegistro,
                     registro?.Puntualidad,
@@ -145,6 +152,7 @@ public sealed class AvanceDiarioService(
                     ? null
                     : AvanceDiarioCalculator.CalcularPorcentaje(cumplidosExigibles, exigibles),
                 registrosAmbiente.Values.Count(x => x.Puntualidad == EstadoPuntualidad.Tardio),
+                registrosAmbiente.Values.Count(x => x.Puntualidad == EstadoPuntualidad.FueraDePlazo),
                 registrosAmbiente.Values.Count(x => x.Detalles.Any(y =>
                     y.EstadoRango != EstadoRango.DentroDeRango)),
                 resumenHorarios,
@@ -155,10 +163,22 @@ public sealed class AvanceDiarioService(
         return resultado;
     }
 
+    private async Task<TimeOnly?> ObtenerHoraInicioPredeterminadaAsync(
+        CancellationToken cancellationToken)
+    {
+        return await _context.Horarios
+            .AsNoTracking()
+            .Where(x => x.Activo && !x.EsCierreDiaOperativoAnterior)
+            .OrderBy(x => x.HoraReferencia)
+            .Select(x => (TimeOnly?)x.HoraReferencia)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     private DateOnly DeterminarFechaOperativa(
         IReadOnlyCollection<AmbienteHorario> configuraciones,
         DateOnly hoy,
-        DateTimeOffset ahora)
+        DateTimeOffset ahora,
+        TimeOnly? horaInicioPredeterminada)
     {
         var vigentesHoy = SeleccionarConfiguracionesVigentes(configuraciones, hoy);
         var primeraApertura = vigentesHoy
@@ -168,9 +188,11 @@ public sealed class AvanceDiarioService(
             .OrderBy(x => x)
             .FirstOrDefault();
 
-        if (primeraApertura == default)
+        if (primeraApertura == default && horaInicioPredeterminada.HasValue)
         {
-            primeraApertura = CrearInstanteLocal(hoy, new TimeOnly(7, 0)).AddMinutes(-30);
+            // El ambiente aún no tiene rondas asignadas: se usa la primera del catálogo.
+            primeraApertura = CrearInstanteLocal(hoy, horaInicioPredeterminada.Value)
+                .AddMinutes(-AmbienteHorario.MinutosAntesPredeterminados);
         }
 
         return AvanceDiarioCalculator.DeterminarFechaOperativa(ahora, primeraApertura);

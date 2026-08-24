@@ -17,5 +17,7 @@ public sealed record VentanaRegistroAbierta(
     DateOnly FechaOperativa,
     DateTimeOffset Apertura,
     DateTimeOffset HoraReferencia,
+    DateTimeOffset LimitePuntualidad,
     DateTimeOffset Cierre,
+    DateTimeOffset FinRegularizacion,
     EstadoPuntualidad Puntualidad);

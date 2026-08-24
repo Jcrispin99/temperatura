@@ -8,6 +8,10 @@ public sealed class AlertaRegistroOmitidoWorker(
     private static readonly TimeSpan ToleranciaPosterior = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan ReintentoSinHorarios = TimeSpan.FromHours(6);
     private static readonly TimeSpan ReintentoTrasError = TimeSpan.FromMinutes(15);
+
+    // Acota la espera para que un cambio de horarios desde administración se tome
+    // en cuenta sin esperar al cierre calculado con la configuración anterior.
+    private static readonly TimeSpan EsperaMaxima = TimeSpan.FromHours(1);
     private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
     private readonly TimeProvider _timeProvider = timeProvider;
     private readonly ILogger<AlertaRegistroOmitidoWorker> _logger = logger;
@@ -49,7 +53,14 @@ public sealed class AlertaRegistroOmitidoWorker(
                         proximoCierre.Value);
                 }
 
-                await Task.Delay(espera, _timeProvider, stoppingToken);
+                var esperaAcotada = espera > EsperaMaxima ? EsperaMaxima : espera;
+                await Task.Delay(esperaAcotada, _timeProvider, stoppingToken);
+
+                if (esperaAcotada < espera)
+                {
+                    // Despertar anticipado: se recalcula el cierre por si cambiaron los horarios.
+                    continue;
+                }
             }
 
             await RevisarAsync(stoppingToken);

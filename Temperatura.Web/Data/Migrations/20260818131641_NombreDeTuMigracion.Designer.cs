@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Temperatura.Web.Data;
 
@@ -11,9 +12,11 @@ using Temperatura.Web.Data;
 namespace Temperatura.Web.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260818131641_NombreDeTuMigracion")]
+    partial class NombreDeTuMigracion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -186,19 +189,10 @@ namespace Temperatura.Web.Data.Migrations
                     b.Property<int>("AmbienteId")
                         .HasColumnType("int");
 
-                    b.Property<string>("ComentarioRevision")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
                     b.Property<string>("Estado")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("EstadoIncidencia")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
 
                     b.Property<DateTimeOffset>("FechaHoraCierre")
                         .HasColumnType("datetimeoffset");
@@ -207,12 +201,6 @@ namespace Temperatura.Web.Data.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<DateTimeOffset?>("FechaHoraEnvio")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateTimeOffset?>("FechaHoraRegularizacion")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateTimeOffset?>("FechaHoraRevision")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<DateOnly>("FechaOperativa")
@@ -224,13 +212,6 @@ namespace Temperatura.Web.Data.Migrations
                     b.Property<int>("IntentosEnvio")
                         .HasColumnType("int");
 
-                    b.Property<long?>("RegistroRegularizacionId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("RevisadoPorUsuarioId")
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("UltimoError")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
@@ -241,15 +222,7 @@ namespace Temperatura.Web.Data.Migrations
 
                     b.HasIndex("Estado");
 
-                    b.HasIndex("EstadoIncidencia");
-
                     b.HasIndex("HorarioId");
-
-                    b.HasIndex("RegistroRegularizacionId")
-                        .IsUnique()
-                        .HasFilter("[RegistroRegularizacionId] IS NOT NULL");
-
-                    b.HasIndex("RevisadoPorUsuarioId");
 
                     b.HasIndex("FechaOperativa", "AmbienteId", "HorarioId")
                         .IsUnique();
@@ -336,14 +309,6 @@ namespace Temperatura.Web.Data.Migrations
                     b.Property<short>("MinutosDespues")
                         .HasColumnType("smallint");
 
-                    b.Property<short>("MinutosRegularizacion")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("smallint")
-                        .HasDefaultValue((short)720);
-
-                    b.Property<short>("MinutosToleranciaPuntualidad")
-                        .HasColumnType("smallint");
-
                     b.Property<DateOnly>("VigenteDesde")
                         .HasColumnType("date");
 
@@ -363,7 +328,7 @@ namespace Temperatura.Web.Data.Migrations
 
                     b.ToTable("AmbientesHorarios", null, t =>
                         {
-                            t.HasCheckConstraint("CK_AmbientesHorarios_Ventana", "[MinutosAntes] >= 0 AND [MinutosDespues] > 0 AND [MinutosToleranciaPuntualidad] >= 0 AND [MinutosToleranciaPuntualidad] <= [MinutosDespues] AND [MinutosRegularizacion] BETWEEN 0 AND 2880");
+                            t.HasCheckConstraint("CK_AmbientesHorarios_Ventana", "[MinutosAntes] >= 0 AND [MinutosDespues] > 0");
 
                             t.HasCheckConstraint("CK_AmbientesHorarios_Vigencia", "[VigenteHasta] IS NULL OR [VigenteHasta] >= [VigenteDesde]");
                         });
@@ -377,8 +342,6 @@ namespace Temperatura.Web.Data.Migrations
                             HorarioId = 1,
                             MinutosAntes = (short)30,
                             MinutosDespues = (short)60,
-                            MinutosRegularizacion = (short)720,
-                            MinutosToleranciaPuntualidad = (short)30,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
                         new
@@ -389,8 +352,6 @@ namespace Temperatura.Web.Data.Migrations
                             HorarioId = 2,
                             MinutosAntes = (short)30,
                             MinutosDespues = (short)60,
-                            MinutosRegularizacion = (short)720,
-                            MinutosToleranciaPuntualidad = (short)30,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
                         new
@@ -401,8 +362,6 @@ namespace Temperatura.Web.Data.Migrations
                             HorarioId = 3,
                             MinutosAntes = (short)30,
                             MinutosDespues = (short)60,
-                            MinutosRegularizacion = (short)720,
-                            MinutosToleranciaPuntualidad = (short)30,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
                         new
@@ -413,8 +372,6 @@ namespace Temperatura.Web.Data.Migrations
                             HorarioId = 1,
                             MinutosAntes = (short)30,
                             MinutosDespues = (short)60,
-                            MinutosRegularizacion = (short)720,
-                            MinutosToleranciaPuntualidad = (short)30,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
                         new
@@ -425,8 +382,6 @@ namespace Temperatura.Web.Data.Migrations
                             HorarioId = 2,
                             MinutosAntes = (short)30,
                             MinutosDespues = (short)60,
-                            MinutosRegularizacion = (short)720,
-                            MinutosToleranciaPuntualidad = (short)30,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
                         new
@@ -437,8 +392,6 @@ namespace Temperatura.Web.Data.Migrations
                             HorarioId = 3,
                             MinutosAntes = (short)30,
                             MinutosDespues = (short)60,
-                            MinutosRegularizacion = (short)720,
-                            MinutosToleranciaPuntualidad = (short)30,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
                         new
@@ -449,8 +402,6 @@ namespace Temperatura.Web.Data.Migrations
                             HorarioId = 4,
                             MinutosAntes = (short)30,
                             MinutosDespues = (short)60,
-                            MinutosRegularizacion = (short)720,
-                            MinutosToleranciaPuntualidad = (short)30,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
                         new
@@ -461,8 +412,6 @@ namespace Temperatura.Web.Data.Migrations
                             HorarioId = 1,
                             MinutosAntes = (short)30,
                             MinutosDespues = (short)60,
-                            MinutosRegularizacion = (short)720,
-                            MinutosToleranciaPuntualidad = (short)30,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
                         new
@@ -473,8 +422,6 @@ namespace Temperatura.Web.Data.Migrations
                             HorarioId = 2,
                             MinutosAntes = (short)30,
                             MinutosDespues = (short)60,
-                            MinutosRegularizacion = (short)720,
-                            MinutosToleranciaPuntualidad = (short)30,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
                         new
@@ -485,8 +432,6 @@ namespace Temperatura.Web.Data.Migrations
                             HorarioId = 3,
                             MinutosAntes = (short)30,
                             MinutosDespues = (short)60,
-                            MinutosRegularizacion = (short)720,
-                            MinutosToleranciaPuntualidad = (short)30,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
                         new
@@ -497,8 +442,6 @@ namespace Temperatura.Web.Data.Migrations
                             HorarioId = 4,
                             MinutosAntes = (short)30,
                             MinutosDespues = (short)60,
-                            MinutosRegularizacion = (short)720,
-                            MinutosToleranciaPuntualidad = (short)30,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
                         new
@@ -509,8 +452,6 @@ namespace Temperatura.Web.Data.Migrations
                             HorarioId = 1,
                             MinutosAntes = (short)30,
                             MinutosDespues = (short)60,
-                            MinutosRegularizacion = (short)720,
-                            MinutosToleranciaPuntualidad = (short)30,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
                         new
@@ -521,8 +462,6 @@ namespace Temperatura.Web.Data.Migrations
                             HorarioId = 2,
                             MinutosAntes = (short)30,
                             MinutosDespues = (short)60,
-                            MinutosRegularizacion = (short)720,
-                            MinutosToleranciaPuntualidad = (short)30,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
                         new
@@ -533,8 +472,6 @@ namespace Temperatura.Web.Data.Migrations
                             HorarioId = 3,
                             MinutosAntes = (short)30,
                             MinutosDespues = (short)60,
-                            MinutosRegularizacion = (short)720,
-                            MinutosToleranciaPuntualidad = (short)30,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
                         new
@@ -545,8 +482,6 @@ namespace Temperatura.Web.Data.Migrations
                             HorarioId = 4,
                             MinutosAntes = (short)30,
                             MinutosDespues = (short)60,
-                            MinutosRegularizacion = (short)720,
-                            MinutosToleranciaPuntualidad = (short)30,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
                         new
@@ -557,8 +492,6 @@ namespace Temperatura.Web.Data.Migrations
                             HorarioId = 1,
                             MinutosAntes = (short)30,
                             MinutosDespues = (short)60,
-                            MinutosRegularizacion = (short)720,
-                            MinutosToleranciaPuntualidad = (short)30,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
                         new
@@ -569,8 +502,6 @@ namespace Temperatura.Web.Data.Migrations
                             HorarioId = 2,
                             MinutosAntes = (short)30,
                             MinutosDespues = (short)60,
-                            MinutosRegularizacion = (short)720,
-                            MinutosToleranciaPuntualidad = (short)30,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
                         new
@@ -581,8 +512,6 @@ namespace Temperatura.Web.Data.Migrations
                             HorarioId = 3,
                             MinutosAntes = (short)30,
                             MinutosDespues = (short)60,
-                            MinutosRegularizacion = (short)720,
-                            MinutosToleranciaPuntualidad = (short)30,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         });
                 });
@@ -642,8 +571,8 @@ namespace Temperatura.Web.Data.Migrations
                             Id = 1,
                             Activo = true,
                             AmbienteId = 1,
-                            RangoMaximo = 30m,
-                            RangoMinimo = 15m,
+                            RangoMaximo = 26m,
+                            RangoMinimo = 18m,
                             TipoMedicionId = 1,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
@@ -652,8 +581,8 @@ namespace Temperatura.Web.Data.Migrations
                             Id = 2,
                             Activo = true,
                             AmbienteId = 1,
-                            RangoMaximo = 65m,
-                            RangoMinimo = 15m,
+                            RangoMaximo = 70m,
+                            RangoMinimo = 30m,
                             TipoMedicionId = 2,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
@@ -682,8 +611,8 @@ namespace Temperatura.Web.Data.Migrations
                             Id = 5,
                             Activo = true,
                             AmbienteId = 3,
-                            RangoMaximo = 30m,
-                            RangoMinimo = 15m,
+                            RangoMaximo = 26m,
+                            RangoMinimo = 18m,
                             TipoMedicionId = 1,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
@@ -692,8 +621,8 @@ namespace Temperatura.Web.Data.Migrations
                             Id = 6,
                             Activo = true,
                             AmbienteId = 3,
-                            RangoMaximo = 65m,
-                            RangoMinimo = 15m,
+                            RangoMaximo = 70m,
+                            RangoMinimo = 30m,
                             TipoMedicionId = 2,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
@@ -712,8 +641,8 @@ namespace Temperatura.Web.Data.Migrations
                             Id = 8,
                             Activo = true,
                             AmbienteId = 4,
-                            RangoMaximo = 30m,
-                            RangoMinimo = 15m,
+                            RangoMaximo = 26m,
+                            RangoMinimo = 18m,
                             TipoMedicionId = 1,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
@@ -722,8 +651,8 @@ namespace Temperatura.Web.Data.Migrations
                             Id = 9,
                             Activo = true,
                             AmbienteId = 4,
-                            RangoMaximo = 65m,
-                            RangoMinimo = 15m,
+                            RangoMaximo = 70m,
+                            RangoMinimo = 30m,
                             TipoMedicionId = 2,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
@@ -742,8 +671,8 @@ namespace Temperatura.Web.Data.Migrations
                             Id = 11,
                             Activo = true,
                             AmbienteId = 5,
-                            RangoMaximo = 30m,
-                            RangoMinimo = 15m,
+                            RangoMaximo = 26m,
+                            RangoMinimo = 18m,
                             TipoMedicionId = 1,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
@@ -752,8 +681,8 @@ namespace Temperatura.Web.Data.Migrations
                             Id = 12,
                             Activo = true,
                             AmbienteId = 5,
-                            RangoMaximo = 65m,
-                            RangoMinimo = 15m,
+                            RangoMaximo = 70m,
+                            RangoMinimo = 30m,
                             TipoMedicionId = 2,
                             VigenteDesde = new DateOnly(2026, 1, 1)
                         },
@@ -928,10 +857,6 @@ namespace Temperatura.Web.Data.Migrations
                         .HasPrecision(9, 2)
                         .HasColumnType("decimal(9,2)");
 
-                    b.Property<string>("Observacion")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
                     b.Property<long>("RegistroId")
                         .HasColumnType("bigint");
 
@@ -992,8 +917,8 @@ namespace Temperatura.Web.Data.Migrations
                             Id = 1,
                             Activo = true,
                             EsCierreDiaOperativoAnterior = false,
-                            HoraReferencia = new TimeOnly(7, 0, 0),
-                            Nombre = "07:00"
+                            HoraReferencia = new TimeOnly(8, 0, 0),
+                            Nombre = "08:00"
                         },
                         new
                         {
@@ -1008,8 +933,8 @@ namespace Temperatura.Web.Data.Migrations
                             Id = 3,
                             Activo = true,
                             EsCierreDiaOperativoAnterior = false,
-                            HoraReferencia = new TimeOnly(19, 0, 0),
-                            Nombre = "19:00"
+                            HoraReferencia = new TimeOnly(20, 0, 0),
+                            Nombre = "20:00"
                         },
                         new
                         {
@@ -1045,10 +970,6 @@ namespace Temperatura.Web.Data.Migrations
 
                     b.Property<int>("HorarioId")
                         .HasColumnType("int");
-
-                    b.Property<string>("MotivoFueraDePlazo")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("Puntualidad")
                         .IsRequired()
@@ -1227,23 +1148,9 @@ namespace Temperatura.Web.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Temperatura.Web.Domain.Registro", "RegistroRegularizacion")
-                        .WithOne("IncidenciaRegularizada")
-                        .HasForeignKey("Temperatura.Web.Domain.AlertaRegistroOmitido", "RegistroRegularizacionId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Temperatura.Web.Domain.ApplicationUser", "RevisadoPorUsuario")
-                        .WithMany()
-                        .HasForeignKey("RevisadoPorUsuarioId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.Navigation("Ambiente");
 
                     b.Navigation("Horario");
-
-                    b.Navigation("RegistroRegularizacion");
-
-                    b.Navigation("RevisadoPorUsuario");
                 });
 
             modelBuilder.Entity("Temperatura.Web.Domain.AmbienteHorario", b =>
@@ -1390,8 +1297,6 @@ namespace Temperatura.Web.Data.Migrations
             modelBuilder.Entity("Temperatura.Web.Domain.Registro", b =>
                 {
                     b.Navigation("Detalles");
-
-                    b.Navigation("IncidenciaRegularizada");
                 });
 
             modelBuilder.Entity("Temperatura.Web.Domain.TipoMedicion", b =>

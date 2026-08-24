@@ -60,7 +60,8 @@ public sealed class AlertaRegistroOmitidoService(
         var realizados = (await _context.Registros
                 .AsNoTracking()
                 .Where(x => fechas.Contains(x.FechaOperativa) &&
-                            x.Estado == EstadoRegistro.Confirmado)
+                            x.Estado == EstadoRegistro.Confirmado &&
+                            x.Puntualidad != EstadoPuntualidad.FueraDePlazo)
                 .Select(x => new { x.FechaOperativa, x.AmbienteId, x.HorarioId })
                 .ToListAsync(cancellationToken))
             .Select(x => new RegistroRealizado(x.FechaOperativa, x.AmbienteId, x.HorarioId))
@@ -84,7 +85,8 @@ public sealed class AlertaRegistroOmitidoService(
                 HorarioId = x.HorarioId,
                 FechaHoraCierre = x.FechaHoraCierre,
                 FechaHoraDeteccion = ahora,
-                Estado = EstadoAlertaRegistroOmitido.Pendiente
+                Estado = EstadoAlertaRegistroOmitido.Pendiente,
+                EstadoIncidencia = EstadoIncidenciaRegistro.PendienteRegistro
             }));
             await _context.SaveChangesAsync(cancellationToken);
         }
@@ -92,6 +94,7 @@ public sealed class AlertaRegistroOmitidoService(
         var pendientes = await _context.AlertasRegistrosOmitidos
             .Include(x => x.Ambiente)
             .Include(x => x.Horario)
+            .Include(x => x.RegistroRegularizacion)
             .Where(x => fechas.Contains(x.FechaOperativa) &&
                         x.Estado != EstadoAlertaRegistroOmitido.Enviada)
             .OrderBy(x => x.FechaHoraCierre)
@@ -124,7 +127,7 @@ public sealed class AlertaRegistroOmitidoService(
             await _correoSender.EnviarAsync(
                 configuracionSmtp,
                 destinatarios,
-                $"Registros ambientales omitidos ({pendientes.Count})",
+                $"Incidencias de registros ambientales ({pendientes.Count})",
                 CrearCuerpoCorreo(pendientes, ahora),
                 cancellationToken);
 
@@ -190,16 +193,28 @@ public sealed class AlertaRegistroOmitidoService(
             $"<tr><td>{WebUtility.HtmlEncode(x.Ambiente.Nombre)}</td>" +
             $"<td>{WebUtility.HtmlEncode(x.Horario.Nombre)}</td>" +
             $"<td>{x.FechaOperativa:dd/MM/yyyy}</td>" +
-            $"<td>{x.FechaHoraCierre:dd/MM/yyyy HH:mm}</td></tr>"));
+            $"<td>{x.FechaHoraCierre:dd/MM/yyyy HH:mm}</td>" +
+            $"<td>{WebUtility.HtmlEncode(EtiquetaIncidencia(x.EstadoIncidencia))}</td>" +
+            $"<td>{WebUtility.HtmlEncode(x.RegistroRegularizacion?.MotivoFueraDePlazo ?? "—")}</td></tr>"));
 
         return $"""
-            <h2>Registros ambientales omitidos</h2>
-            <p>Los siguientes ambientes no registraron dentro de la hora establecida:</p>
+            <h2>Incidencias de registros ambientales</h2>
+            <p>Los siguientes ambientes no registraron dentro de la ventana establecida:</p>
             <table style="border-collapse:collapse" border="1" cellpadding="8">
-              <thead><tr><th>Ambiente</th><th>Horario</th><th>Fecha operativa</th><th>Cierre</th></tr></thead>
+              <thead><tr><th>Ambiente</th><th>Horario</th><th>Fecha operativa</th><th>Cierre</th><th>Estado</th><th>Motivo</th></tr></thead>
               <tbody>{filas}</tbody>
             </table>
             <p>Revisión realizada: {ahora:dd/MM/yyyy HH:mm} (hora local).</p>
             """;
     }
+
+    private static string EtiquetaIncidencia(EstadoIncidenciaRegistro estado) => estado switch
+    {
+        EstadoIncidenciaRegistro.PendienteRegistro => "Sin registro",
+        EstadoIncidenciaRegistro.RegularizadaFueraDePlazo => "Regularizada fuera de plazo",
+        EstadoIncidenciaRegistro.Justificada => "Justificada",
+        EstadoIncidenciaRegistro.FaltaConfirmada => "Falta confirmada",
+        EstadoIncidenciaRegistro.AmonestacionEmitida => "Amonestación emitida",
+        _ => "Descartada"
+    };
 }
