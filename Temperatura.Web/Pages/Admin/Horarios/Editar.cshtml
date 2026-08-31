@@ -1,4 +1,5 @@
 @page "{id:int}"
+@using Temperatura.Web.Domain.Enums
 @model Temperatura.Web.Pages.Admin.Horarios.EditarModel
 @{
     ViewData["Title"] = "Editar horario";
@@ -31,6 +32,19 @@
                     <span asp-validation-for="Input.Nombre" class="text-danger small"></span>
                 </div>
 
+                <div class="mb-3">
+                    <label asp-for="Input.MomentoOperativo" class="form-label">Momento operativo</label>
+                    <select asp-for="Input.MomentoOperativo" class="form-select">
+                        <option value="">Selecciona un momento</option>
+                        <option value="@MomentoOperativo.Manana">Mañana</option>
+                        <option value="@MomentoOperativo.Mediodia">Mediodía</option>
+                        <option value="@MomentoOperativo.Noche">Noche</option>
+                        <option value="@MomentoOperativo.Medianoche">Medianoche</option>
+                    </select>
+                    <div class="form-text">Agrupa variantes de hora en una misma columna de las gráficas.</div>
+                    <span asp-validation-for="Input.MomentoOperativo" class="text-danger small"></span>
+                </div>
+
                 <div class="form-check mb-2">
                     <input asp-for="Input.EsCierreDiaOperativoAnterior" class="form-check-input" />
                     <label asp-for="Input.EsCierreDiaOperativoAnterior" class="form-check-label">
@@ -50,10 +64,9 @@
 
                 @if (Model.RegistrosHistoricos > 0)
                 {
-                    <div class="alert alert-warning mt-3 mb-0" role="alert">
-                        Cambiar la hora reescribe cómo se muestran los @Model.RegistrosHistoricos registro(s)
-                        ya guardados de esta ronda: el historial pasará a mostrarlos con la hora nueva.
-                        La hora real en que se tomó cada lectura no se altera.
+                    <div class="alert alert-info mt-3 mb-0" role="note">
+                        Los @Model.RegistrosHistoricos registro(s) ya guardados conservan el nombre, la hora y el
+                        momento operativo que se les aplicó. Los cambios afectarán únicamente registros nuevos.
                     </div>
                 }
             </div>

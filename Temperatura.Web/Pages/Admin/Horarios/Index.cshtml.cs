@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Temperatura.Web.Data;
+using Temperatura.Web.Domain.Enums;
 
 namespace Temperatura.Web.Pages.Admin.Horarios;
 
@@ -22,6 +23,7 @@ public class IndexModel(ApplicationDbContext context) : PageModel
                 x.Id,
                 x.Nombre,
                 x.HoraReferencia,
+                x.MomentoOperativo,
                 x.EsCierreDiaOperativoAnterior,
                 x.Activo,
                 x.Ambientes.Count(y => y.Activo),
@@ -33,6 +35,7 @@ public class IndexModel(ApplicationDbContext context) : PageModel
         int Id,
         string Nombre,
         TimeOnly HoraReferencia,
+        MomentoOperativo MomentoOperativo,
         bool EsCierreDiaOperativoAnterior,
         bool Activo,
         int Ambientes,

@@ -81,13 +81,16 @@ public sealed class AlertaRegistroOmitidoWorker(
             await using var scope = _scopeFactory.CreateAsyncScope();
             var servicio = scope.ServiceProvider.GetRequiredService<IAlertaRegistroOmitidoService>();
             await servicio.RevisarYNotificarAsync(cancellationToken);
+            var servicioAlertasRango = scope.ServiceProvider
+                .GetRequiredService<IAlertaRegistroFueraRangoService>();
+            await servicioAlertasRango.ReintentarPendientesAsync(cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
         }
         catch (Exception exception)
         {
-            _logger.LogError(exception, "Falló la revisión automática de registros omitidos.");
+            _logger.LogError(exception, "Falló la revisión automática de alertas por correo.");
         }
     }
 }

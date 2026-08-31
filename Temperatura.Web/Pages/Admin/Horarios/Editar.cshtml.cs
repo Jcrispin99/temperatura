@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Temperatura.Web.Data;
+using Temperatura.Web.Domain.Enums;
 using Temperatura.Web.Services;
 
 namespace Temperatura.Web.Pages.Admin.Horarios;
@@ -37,6 +38,7 @@ public class EditarModel(ApplicationDbContext context) : PageModel
         {
             Nombre = horario.Nombre,
             HoraReferencia = horario.HoraReferencia,
+            MomentoOperativo = horario.MomentoOperativo,
             EsCierreDiaOperativoAnterior = horario.EsCierreDiaOperativoAnterior,
             Activo = horario.Activo
         };
@@ -53,6 +55,7 @@ public class EditarModel(ApplicationDbContext context) : PageModel
         }
 
         await CargarContextoAsync();
+        ValidarMomentoOperativo();
 
         if (!ModelState.IsValid)
         {
@@ -83,6 +86,8 @@ public class EditarModel(ApplicationDbContext context) : PageModel
             ModelState.AddModelError(error.Clave, error.Mensaje);
         }
 
+        await ValidarAsignacionesDelMomentoAsync();
+
         if (!ModelState.IsValid)
         {
             return Page();
@@ -90,6 +95,7 @@ public class EditarModel(ApplicationDbContext context) : PageModel
 
         horario.Nombre = Input.Nombre;
         horario.HoraReferencia = hora;
+        horario.MomentoOperativo = Input.MomentoOperativo!.Value;
         horario.EsCierreDiaOperativoAnterior = Input.EsCierreDiaOperativoAnterior;
         horario.Activo = Input.Activo;
 
@@ -109,6 +115,52 @@ public class EditarModel(ApplicationDbContext context) : PageModel
         return RedirectToPage("Index");
     }
 
+    private void ValidarMomentoOperativo()
+    {
+        if (!Input.MomentoOperativo.HasValue)
+        {
+            return;
+        }
+
+        var esMedianoche = Input.MomentoOperativo == MomentoOperativo.Medianoche;
+        if (esMedianoche != Input.EsCierreDiaOperativoAnterior)
+        {
+            ModelState.AddModelError(
+                "Input.MomentoOperativo",
+                "Medianoche debe cerrar el día operativo anterior; los demás momentos pertenecen al mismo día.");
+        }
+    }
+
+    private async Task ValidarAsignacionesDelMomentoAsync()
+    {
+        if (!Input.MomentoOperativo.HasValue)
+        {
+            return;
+        }
+
+        var ambientesAsignados = _context.AmbientesHorarios
+            .Where(x => x.HorarioId == Id && x.Activo)
+            .Select(x => x.AmbienteId);
+        var ambientesEnConflicto = await _context.AmbientesHorarios
+            .AsNoTracking()
+            .Where(x =>
+                x.Activo &&
+                x.HorarioId != Id &&
+                x.Horario.MomentoOperativo == Input.MomentoOperativo.Value &&
+                ambientesAsignados.Contains(x.AmbienteId))
+            .Select(x => x.Ambiente.Nombre)
+            .Distinct()
+            .OrderBy(x => x)
+            .ToListAsync();
+
+        if (ambientesEnConflicto.Count > 0)
+        {
+            ModelState.AddModelError(
+                "Input.MomentoOperativo",
+                $"El momento ya tiene otro horario asignado en: {string.Join(", ", ambientesEnConflicto)}.");
+        }
+    }
+
     private async Task CargarContextoAsync()
     {
         RegistrosHistoricos = await _context.Registros.CountAsync(x => x.HorarioId == Id);
@@ -124,6 +176,9 @@ public class EditarModel(ApplicationDbContext context) : PageModel
         [Required(ErrorMessage = "Ingresa la hora de referencia.")]
         [DataType(DataType.Time)]
         public TimeOnly? HoraReferencia { get; set; }
+
+        [Required(ErrorMessage = "Selecciona el momento operativo.")]
+        public MomentoOperativo? MomentoOperativo { get; set; }
 
         public bool EsCierreDiaOperativoAnterior { get; set; }
 

@@ -12,6 +12,14 @@ public class Registro
 
     public int HorarioId { get; set; }
 
+    public string HorarioNombreAplicado { get; set; } = string.Empty;
+
+    public TimeOnly HoraReferenciaAplicada { get; set; }
+
+    public MomentoOperativo MomentoOperativoAplicado { get; set; }
+
+    public bool EsCierreDiaOperativoAnteriorAplicado { get; set; }
+
     public string UsuarioId { get; set; } = string.Empty;
 
     public DateTimeOffset FechaHoraRegistro { get; set; }
@@ -31,4 +39,6 @@ public class Registro
     public ICollection<DetalleRegistro> Detalles { get; set; } = [];
 
     public AlertaRegistroOmitido? IncidenciaRegularizada { get; set; }
+
+    public AlertaRegistroFueraRango? AlertaFueraRango { get; set; }
 }

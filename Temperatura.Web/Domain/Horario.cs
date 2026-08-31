@@ -1,3 +1,5 @@
+using Temperatura.Web.Domain.Enums;
+
 namespace Temperatura.Web.Domain;
 
 public class Horario
@@ -7,6 +9,8 @@ public class Horario
     public string Nombre { get; set; } = string.Empty;
 
     public TimeOnly HoraReferencia { get; set; }
+
+    public MomentoOperativo MomentoOperativo { get; set; }
 
     public bool EsCierreDiaOperativoAnterior { get; set; }
 

@@ -40,7 +40,9 @@ else if (Model.Ambientes.Count == 0)
 else if (Model.EsSupervisor)
 {
     var resumenPeriodo = Model.ResumenPeriodo!;
-    var porcentajeAvance = resumenPeriodo.PorcentajeAvance.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+    var pendientesSinRegularizar = Math.Max(
+        resumenPeriodo.RegistrosNoRegistrados - resumenPeriodo.RegistrosFueraDePlazo,
+        0);
 
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
         <div>
@@ -87,30 +89,31 @@ else if (Model.EsSupervisor)
 
     <div class="row g-4">
         <div class="col-xl-8">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body p-4 p-lg-5 d-flex flex-column align-items-center justify-content-center">
-                    <div class="dashboard-gauge" style="--avance: @porcentajeAvance;" role="img" aria-label="Avance general: @porcentajeAvance por ciento">
-                        <div class="dashboard-gauge-value">
-                            <span>@resumenPeriodo.PorcentajeAvance.ToString("0.##")%</span>
-                            <small>avance general</small>
-                        </div>
+            <div class="card border-0 shadow-sm h-100 dashboard-overview-card">
+                <div class="card-body p-4 d-flex flex-column align-items-center justify-content-center">
+                    <div class="dashboard-overview-chart">
+                        <canvas id="grafica-avance-general"
+                                role="img"
+                                aria-label="Distribución general: @resumenPeriodo.RegistrosCompletados cumplidos, @resumenPeriodo.RegistrosFueraDePlazo regularizados fuera de plazo y @pendientesSinRegularizar pendientes o sin registro.">
+                            Avance general: @resumenPeriodo.PorcentajeAvance.ToString("0.##")%.
+                        </canvas>
                     </div>
-                    <div class="row g-3 w-100 mt-2 text-center">
-                        <div class="col-sm-3">
-                            <div class="text-secondary small">Áreas consideradas</div>
-                            <div class="dashboard-summary-number">@resumenPeriodo.AmbientesConsiderados</div>
+                    <div class="row g-3 w-100 mt-1 text-center">
+                        <div class="col-6 col-sm-3">
+                            <div class="text-secondary small">Programados</div>
+                            <div class="dashboard-summary-number">@resumenPeriodo.RegistrosEsperados</div>
                         </div>
-                        <div class="col-sm-3">
-                            <div class="text-secondary small">Registrados</div>
+                        <div class="col-6 col-sm-3">
+                            <div class="text-secondary small">Cumplidos</div>
                             <div class="dashboard-summary-number text-success">@resumenPeriodo.RegistrosCompletados</div>
                         </div>
-                        <div class="col-sm-3">
-                            <div class="text-secondary small">No cumplidos</div>
-                            <div class="dashboard-summary-number @(resumenPeriodo.RegistrosNoRegistrados > 0 ? "text-danger" : "text-success")">@resumenPeriodo.RegistrosNoRegistrados</div>
+                        <div class="col-6 col-sm-3">
+                            <div class="text-secondary small">Pendientes o sin registro</div>
+                            <div class="dashboard-summary-number @(pendientesSinRegularizar > 0 ? "text-secondary" : "text-success")">@pendientesSinRegularizar</div>
                         </div>
-                        <div class="col-sm-3">
+                        <div class="col-6 col-sm-3">
                             <div class="text-secondary small">Regularizados fuera de plazo</div>
-                            <div class="dashboard-summary-number @(resumenPeriodo.RegistrosFueraDePlazo > 0 ? "text-danger" : string.Empty)">@resumenPeriodo.RegistrosFueraDePlazo</div>
+                            <div class="dashboard-summary-number @(resumenPeriodo.RegistrosFueraDePlazo > 0 ? "text-warning" : string.Empty)">@resumenPeriodo.RegistrosFueraDePlazo</div>
                         </div>
                     </div>
                 </div>
@@ -138,6 +141,44 @@ else if (Model.EsSupervisor)
             </div>
         </div>
     </div>
+
+    @if (resumenPeriodo.RegistrosEsperados > 0)
+    {
+        <section class="row g-4 mt-0" aria-labelledby="graficas-avance-titulo">
+            <div class="col-12">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-end gap-2 mt-4">
+                    <div>
+                        <h2 id="graficas-avance-titulo" class="h3 mb-1">Detalle por ambiente</h2>
+                        <p class="text-secondary mb-0">Comparación de los registros programados en el período seleccionado.</p>
+                    </div>
+                    <span class="badge text-bg-light">@resumenPeriodo.AmbientesConsiderados ambientes</span>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="card border-0 shadow-sm h-100 dashboard-chart-card">
+                    <div class="card-header">
+                        <div>
+                            <h3 class="card-title mb-1">Cumplimiento por ambiente</h3>
+                            <div class="text-secondary small">Los ambientes con menor avance aparecen primero.</div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="dashboard-chart-container dashboard-chart-bars" data-dashboard-bar-container>
+                            <canvas id="grafica-avance-ambientes"
+                                    role="img"
+                                    aria-label="Barras apiladas del cumplimiento por ambiente.">
+                                Consulta la lista de ambientes para conocer el porcentaje de cada uno.
+                            </canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    }
+
+    <script id="datos-graficas-avance" type="application/json">@Html.Raw(Model.DatosGraficasAvanceJson)</script>
 }
 else if (Model.ResumenSeleccionado is { } resumen)
 {
@@ -363,4 +404,12 @@ else if (Model.ResumenSeleccionado is { } resumen)
         EstadoHorarioDiario.Vencido => "Vencido",
         _ => "Próximo"
     };
+}
+
+@section Scripts {
+    @if (User.Identity?.IsAuthenticated == true && Model.EsSupervisor && Model.ResumenPeriodo is not null)
+    {
+        <script src="~/lib/chartjs/chart.umd.js"></script>
+        <script src="~/js/avance-dashboard.js" asp-append-version="true"></script>
+    }
 }

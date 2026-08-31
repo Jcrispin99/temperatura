@@ -315,8 +315,13 @@
                 return;
             }
 
+            const Modal = window.tabler?.bootstrap?.Modal ?? window.bootstrap?.Modal;
+            if (!Modal) {
+                return;
+            }
+
             const parseDecimal = value => Number.parseFloat(value.trim().replace(',', '.'));
-            const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+            const modal = Modal.getOrCreateInstance(modalElement);
 
             const addCell = (row, value, className) => {
                 const cell = document.createElement('td');

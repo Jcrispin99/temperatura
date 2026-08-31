@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -15,6 +16,11 @@ public class IndexModel(
     IResumenAvanceService resumenAvanceService,
     IVentanaRegistroService ventanaRegistroService) : PageModel
 {
+    private static readonly JsonSerializerOptions OpcionesJson = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
     private readonly ApplicationDbContext _context = context;
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly IAvanceDiarioService _avanceDiarioService = avanceDiarioService;
@@ -37,6 +43,7 @@ public class IndexModel(
     public IReadOnlyList<ResumenAvanceAmbiente> Resumenes { get; private set; } = [];
     public ResumenAvanceAmbiente? ResumenSeleccionado => Resumenes.FirstOrDefault();
     public ResumenAvancePeriodo? ResumenPeriodo { get; private set; }
+    public string DatosGraficasAvanceJson { get; private set; } = "{}";
     public DateOnly FechaDesde { get; private set; }
     public DateOnly FechaHasta { get; private set; }
     public bool EsSupervisor => User.IsInRole("Supervisor");
@@ -77,6 +84,7 @@ public class IndexModel(
                 FechaDesde,
                 FechaHasta,
                 HttpContext.RequestAborted);
+            PrepararDatosGraficasAvance(ResumenPeriodo);
             return;
         }
 
@@ -134,5 +142,63 @@ public class IndexModel(
         return (desde, hasta > hoy ? hoy : hasta);
     }
 
+    private void PrepararDatosGraficasAvance(ResumenAvancePeriodo resumen)
+    {
+        var datos = new DatosGraficasAvance(
+            resumen.PorcentajeAvance,
+            resumen.RegistrosEsperados,
+            CrearDistribucion(
+                resumen.RegistrosEsperados,
+                resumen.RegistrosCompletados,
+                resumen.RegistrosFueraDePlazo),
+            resumen.Ambientes
+                .OrderBy(x => x.PorcentajeAvance)
+                .ThenBy(x => x.Ambiente)
+                .Select(x => new AvanceAmbienteGrafica(
+                    x.Ambiente,
+                    x.RegistrosEsperados,
+                    x.PorcentajeAvance,
+                    CrearDistribucion(
+                        x.RegistrosEsperados,
+                        x.RegistrosCompletados,
+                        x.RegistrosFueraDePlazo)))
+                .ToList());
+
+        DatosGraficasAvanceJson = JsonSerializer.Serialize(datos, OpcionesJson);
+    }
+
+    private static DistribucionAvance CrearDistribucion(
+        int programados,
+        int cumplidos,
+        int fueraDePlazo)
+    {
+        var total = Math.Max(programados, 0);
+        var cumplidosAplicables = Math.Min(Math.Max(cumplidos, 0), total);
+        var noCumplidos = total - cumplidosAplicables;
+        var regularizados = Math.Min(Math.Max(fueraDePlazo, 0), noCumplidos);
+
+        return new DistribucionAvance(
+            cumplidosAplicables,
+            regularizados,
+            noCumplidos - regularizados);
+    }
+
     public sealed record AmbienteOpcion(int Id, string Nombre, bool EsPredeterminado);
+
+    public sealed record DatosGraficasAvance(
+        decimal PorcentajeAvance,
+        int Programados,
+        DistribucionAvance Distribucion,
+        IReadOnlyList<AvanceAmbienteGrafica> Ambientes);
+
+    public sealed record AvanceAmbienteGrafica(
+        string Ambiente,
+        int Programados,
+        decimal PorcentajeAvance,
+        DistribucionAvance Distribucion);
+
+    public sealed record DistribucionAvance(
+        int Cumplidos,
+        int FueraDePlazo,
+        int Pendientes);
 }

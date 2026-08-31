@@ -1,4 +1,5 @@
 @page "{id:int}"
+@using Temperatura.Web.Domain.Enums
 @model Temperatura.Web.Pages.Admin.Ambientes.EditarModel
 @{
     ViewData["Title"] = "Editar ambiente";
@@ -134,9 +135,12 @@
                                             <input asp-for="Input.Horarios[indice].HorarioId" type="hidden" />
                                             <input asp-for="Input.Horarios[indice].Habilitado"
                                                    class="form-check-input schedule-toggle" />
+                                            <span asp-validation-for="Input.Horarios[indice].Habilitado"
+                                                  class="text-danger small d-block"></span>
                                         </td>
                                         <td>
                                             <div class="fw-semibold">@horario.Nombre</div>
+                                            <div class="small text-secondary">@horario.MomentoOperativo.ObtenerNombre()</div>
                                             @if (horario.EsCierreDiaOperativoAnterior)
                                             {
                                                 <div class="small text-secondary">Cierra el día operativo anterior</div>

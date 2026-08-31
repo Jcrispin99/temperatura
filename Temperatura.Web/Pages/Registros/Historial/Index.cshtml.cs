@@ -154,7 +154,7 @@ public class IndexModel(
 
         Registros = await consulta
             .OrderByDescending(x => x.FechaOperativa)
-            .ThenByDescending(x => x.Horario.HoraReferencia)
+            .ThenByDescending(x => x.HoraReferenciaAplicada)
             .ThenByDescending(x => x.FechaHoraRegistro)
             .Skip((Pagina - 1) * TamanoPagina)
             .Take(TamanoPagina)
@@ -162,7 +162,7 @@ public class IndexModel(
                 x.Id,
                 x.FechaOperativa,
                 x.Ambiente.Nombre,
-                x.Horario.Nombre,
+                x.HorarioNombreAplicado,
                 x.Usuario.Nombre,
                 x.Usuario.Email ?? string.Empty,
                 x.FechaHoraRegistro,

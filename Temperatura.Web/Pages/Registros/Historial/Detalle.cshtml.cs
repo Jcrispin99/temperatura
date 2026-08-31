@@ -35,7 +35,7 @@ public class DetalleModel(
                 x.Id,
                 x.FechaOperativa,
                 x.Ambiente.Nombre,
-                x.Horario.Nombre,
+                x.HorarioNombreAplicado,
                 x.Usuario.Nombre,
                 x.Usuario.Email ?? string.Empty,
                 x.FechaHoraRegistro,

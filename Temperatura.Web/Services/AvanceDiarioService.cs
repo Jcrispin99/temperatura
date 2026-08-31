@@ -127,7 +127,7 @@ public sealed class AvanceDiarioService(
                     .Where(x => x.EstadoRango != EstadoRango.DentroDeRango)
                     .Select(x => new AlertaRangoReciente(
                         registro.Id,
-                        registro.Horario.Nombre,
+                        registro.HorarioNombreAplicado,
                         x.TipoMedicion.Nombre,
                         x.TipoMedicion.SimboloUnidad,
                         x.Valor,

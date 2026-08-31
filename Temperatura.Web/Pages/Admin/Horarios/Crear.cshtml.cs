@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Temperatura.Web.Data;
 using Temperatura.Web.Domain;
+using Temperatura.Web.Domain.Enums;
 using Temperatura.Web.Services;
 
 namespace Temperatura.Web.Pages.Admin.Horarios;
@@ -23,6 +24,7 @@ public class CrearModel(ApplicationDbContext context) : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        ValidarMomentoOperativo();
         if (!ModelState.IsValid)
         {
             return Page();
@@ -54,6 +56,7 @@ public class CrearModel(ApplicationDbContext context) : PageModel
         {
             Nombre = Input.Nombre,
             HoraReferencia = hora,
+            MomentoOperativo = Input.MomentoOperativo!.Value,
             EsCierreDiaOperativoAnterior = Input.EsCierreDiaOperativoAnterior,
             Activo = Input.Activo
         };
@@ -76,6 +79,22 @@ public class CrearModel(ApplicationDbContext context) : PageModel
         return RedirectToPage("Index");
     }
 
+    private void ValidarMomentoOperativo()
+    {
+        if (!Input.MomentoOperativo.HasValue)
+        {
+            return;
+        }
+
+        var esMedianoche = Input.MomentoOperativo == MomentoOperativo.Medianoche;
+        if (esMedianoche != Input.EsCierreDiaOperativoAnterior)
+        {
+            ModelState.AddModelError(
+                "Input.MomentoOperativo",
+                "Medianoche debe cerrar el día operativo anterior; los demás momentos pertenecen al mismo día.");
+        }
+    }
+
     private async Task<List<HorarioValidable>> ObtenerValidablesAsync()
     {
         return await _context.Horarios
@@ -96,6 +115,9 @@ public class CrearModel(ApplicationDbContext context) : PageModel
         [Required(ErrorMessage = "Ingresa la hora de referencia.")]
         [DataType(DataType.Time)]
         public TimeOnly? HoraReferencia { get; set; }
+
+        [Required(ErrorMessage = "Selecciona el momento operativo.")]
+        public MomentoOperativo? MomentoOperativo { get; set; }
 
         public bool EsCierreDiaOperativoAnterior { get; set; }
 

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Temperatura.Web.Data;
 
@@ -11,9 +12,11 @@ using Temperatura.Web.Data;
 namespace Temperatura.Web.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260831133340_AgregarMomentosOperativos")]
+    partial class AgregarMomentosOperativos
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -173,45 +176,6 @@ namespace Temperatura.Web.Data.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("Temperatura.Web.Domain.AlertaRegistroFueraRango", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("Estado")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<DateTimeOffset>("FechaHoraDeteccion")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateTimeOffset?>("FechaHoraEnvio")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<int>("IntentosEnvio")
-                        .HasColumnType("int");
-
-                    b.Property<long>("RegistroId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("UltimoError")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Estado");
-
-                    b.HasIndex("RegistroId")
-                        .IsUnique();
-
-                    b.ToTable("AlertasRegistrosFueraRango", (string)null);
                 });
 
             modelBuilder.Entity("Temperatura.Web.Domain.AlertaRegistroOmitido", b =>
@@ -1283,17 +1247,6 @@ namespace Temperatura.Web.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Temperatura.Web.Domain.AlertaRegistroFueraRango", b =>
-                {
-                    b.HasOne("Temperatura.Web.Domain.Registro", "Registro")
-                        .WithOne("AlertaFueraRango")
-                        .HasForeignKey("Temperatura.Web.Domain.AlertaRegistroFueraRango", "RegistroId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Registro");
-                });
-
             modelBuilder.Entity("Temperatura.Web.Domain.AlertaRegistroOmitido", b =>
                 {
                     b.HasOne("Temperatura.Web.Domain.Ambiente", "Ambiente")
@@ -1470,8 +1423,6 @@ namespace Temperatura.Web.Data.Migrations
 
             modelBuilder.Entity("Temperatura.Web.Domain.Registro", b =>
                 {
-                    b.Navigation("AlertaFueraRango");
-
                     b.Navigation("Detalles");
 
                     b.Navigation("IncidenciaRegularizada");

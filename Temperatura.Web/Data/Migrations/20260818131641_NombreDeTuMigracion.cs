@@ -16,7 +16,7 @@ namespace Temperatura.Web.Data.Migrations
                 keyColumn: "Id",
                 keyValue: 1,
                 columns: new[] { "HoraReferencia", "Nombre" },
-                values: new object[] { new TimeOnly(8, 0, 0), "08:00" });
+                values: new object[] { new TimeOnly(7, 0, 0), "07:00" });
 
             migrationBuilder.UpdateData(
                 table: "Horarios",
@@ -30,7 +30,7 @@ namespace Temperatura.Web.Data.Migrations
                 keyColumn: "Id",
                 keyValue: 3,
                 columns: new[] { "HoraReferencia", "Nombre" },
-                values: new object[] { new TimeOnly(20, 0, 0), "20:00" });
+                values: new object[] { new TimeOnly(19, 0, 0), "19:00" });
 
             migrationBuilder.UpdateData(
                 table: "Horarios",

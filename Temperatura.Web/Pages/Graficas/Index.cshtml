@@ -1,7 +1,6 @@
 @page "/Graficas"
 @using Temperatura.Web.Domain.Enums
 @using Temperatura.Web.Pages.Graficas
-@using Temperatura.Web.Services
 @model Temperatura.Web.Pages.Graficas.IndexModel
 @{
     ViewData["Title"] = "Gráficas";
@@ -18,19 +17,12 @@
         <span class="badge text-bg-primary mb-2">Análisis</span>
         <h1 class="h2 mb-1">Tendencias de temperatura y humedad</h1>
         <p class="text-secondary mb-0">
-            @if (Model.Modo == ModoVisualizacionGrafica.DetalleHorarios)
-            {
-                <text>Cada línea representa un ambiente y cada columna uno de los horarios del día.</text>
-            }
-            else
-            {
-                <text>Cada línea representa un ambiente y cada punto el promedio del día operativo.</text>
-            }
+            Cada punto es una lectura real. Las horas distintas se alinean por momento operativo.
         </p>
     </div>
     <a asp-page="/Registros/Historial/Index"
-       asp-route-FechaDesde="@Model.FechaDesde.ToString("yyyy-MM-dd")"
-       asp-route-FechaHasta="@Model.FechaHasta.ToString("yyyy-MM-dd")"
+       asp-route-FechaDesde="@Model.FechaDesde?.ToString("yyyy-MM-dd")"
+       asp-route-FechaHasta="@Model.FechaHasta?.ToString("yyyy-MM-dd")"
        class="btn btn-outline-secondary">
         Ver historial
     </a>
@@ -43,52 +35,15 @@
             <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
         }
         <div class="row g-3 align-items-end">
-            <div class="col-lg-6 col-xl-3">
-                <label class="form-label">Visualización</label>
-                <div class="btn-group w-100" role="group" aria-label="Modo de visualización">
-                    <input type="radio"
-                           class="btn-check"
-                           name="Modo"
-                           value="PromedioDiario"
-                           id="modo-grafica-promedio"
-                           data-visualization-mode
-                           checked="@(Model.Modo == ModoVisualizacionGrafica.PromedioDiario)" />
-                    <label class="btn btn-outline-primary" for="modo-grafica-promedio">Promedio</label>
-                    <input type="radio"
-                           class="btn-check"
-                           name="Modo"
-                           value="DetalleHorarios"
-                           id="modo-grafica-horarios"
-                           data-visualization-mode
-                           checked="@(Model.Modo == ModoVisualizacionGrafica.DetalleHorarios)" />
-                    <label class="btn btn-outline-primary" for="modo-grafica-horarios">4 horarios</label>
-                </div>
-            </div>
-            <div class="col-lg-6 col-xl-3 @(Model.Modo == ModoVisualizacionGrafica.DetalleHorarios ? "d-none" : string.Empty)"
-                 data-period-selector>
-                <label class="form-label">Período</label>
-                <div class="btn-group w-100" role="group" aria-label="Período de las gráficas">
-                    <input type="radio"
-                           class="btn-check"
-                           name="Periodo"
-                           value="Semanal"
-                           id="periodo-grafica-semanal"
-                           checked="@(Model.Periodo == PeriodoDashboard.Semanal)" />
-                    <label class="btn btn-outline-primary" for="periodo-grafica-semanal">Semanal</label>
-                    <input type="radio"
-                           class="btn-check"
-                           name="Periodo"
-                           value="Mensual"
-                           id="periodo-grafica-mensual"
-                           checked="@(Model.Periodo == PeriodoDashboard.Mensual)" />
-                    <label class="btn btn-outline-primary" for="periodo-grafica-mensual">Mensual</label>
-                </div>
+            <div class="col-sm-6 col-xl-2">
+                <label asp-for="FechaDesde" class="form-label">Fecha desde</label>
+                <input asp-for="FechaDesde" type="date" class="form-control" />
             </div>
             <div class="col-sm-6 col-xl-2">
-                <label asp-for="Fecha" class="form-label">Fecha de referencia</label>
-                <input asp-for="Fecha" type="date" class="form-control" />
+                <label asp-for="FechaHasta" class="form-label">Fecha hasta</label>
+                <input asp-for="FechaHasta" type="date" class="form-control" />
             </div>
-            <div class="col-md-6 col-xl-3">
+            <div class="col-md-8 col-xl-6">
                 <label class="form-label" for="selector-ambientes-boton">Ambientes</label>
                 <div class="dropdown environment-selector" data-environment-selector>
                     <button id="selector-ambientes-boton"
@@ -134,23 +89,14 @@
                     Selecciona al menos un ambiente.
                 </div>
             </div>
-            <div class="col-xl-1 d-grid">
+            <div class="col-md-4 col-xl-2 d-grid">
                 <button type="submit" class="btn btn-primary">Aplicar</button>
             </div>
         </div>
     </div>
     <div class="card-footer d-flex flex-wrap align-items-center gap-2">
         <span class="badge text-bg-primary">@Model.TituloPeriodo</span>
-        <span class="text-secondary">
-            @if (Model.Modo == ModoVisualizacionGrafica.DetalleHorarios)
-            {
-                <text>Mañana · Tarde · Noche · Medianoche</text>
-            }
-            else
-            {
-                <text>@Model.FechaDesde.ToString("dd/MM/yyyy") – @Model.FechaHasta.ToString("dd/MM/yyyy")</text>
-            }
-        </span>
+        <span class="text-secondary">Máximo @Model.MaximoDias días · Mañana · Mediodía · Noche · Medianoche</span>
     </div>
 </form>
 
@@ -203,7 +149,7 @@ else
                             <h2 class="h4 mb-0">@grafica.Nombre</h2>
                             <div class="d-flex flex-wrap gap-2">
                                 <span class="badge text-bg-primary">
-                                    @(grafica.EsPromedioDiario ? "Promedio diario" : "Detalle por horario")
+                                    Lecturas por horario
                                 </span>
                                 <span class="badge text-bg-light">Unidad: @grafica.Unidad</span>
                             </div>
@@ -217,21 +163,44 @@ else
                         }
                         else
                         {
-                            <div class="chart-container">
-                                <canvas data-medicion-chart="@grafica.TipoMedicionId"
-                                        role="img"
-                                        aria-label="Gráfica de @grafica.Nombre por ambiente"></canvas>
+                            <div class="chart-fixed-legend"
+                                 data-chart-legend="@grafica.TipoMedicionId"
+                                 aria-label="Leyenda de @grafica.Nombre"></div>
+                            <div class="chart-layout">
+                                <div class="chart-fixed-axis"
+                                     data-fixed-y-axis="@grafica.TipoMedicionId"
+                                     aria-hidden="true"></div>
+                                <div class="chart-scroll" data-chart-scroll tabindex="0"
+                                     aria-label="Gráfica desplazable de @grafica.Nombre">
+                                    <div class="chart-frame" data-chart-frame>
+                                        <div class="chart-container">
+                                            <canvas data-medicion-chart="@grafica.TipoMedicionId"
+                                                    role="img"
+                                                    aria-label="Gráfica de @grafica.Nombre por ambiente"></canvas>
+                                        </div>
+                                        <div class="chart-grouped-axis"
+                                             style="--chart-day-count: @(grafica.Etiquetas.Count / 4);"
+                                             aria-hidden="true">
+                                            @foreach (var columnasDia in grafica.Etiquetas.Chunk(4))
+                                            {
+                                                <div class="chart-date-group">
+                                                    <div class="chart-moment-labels">
+                                                        @foreach (var columna in columnasDia)
+                                                        {
+                                                            <span>@columna.MomentoCorto</span>
+                                                        }
+                                                    </div>
+                                                    <div class="chart-date-label">@columnasDia[0].Fecha</div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             <div class="chart-help text-secondary small mt-2">
-                                @if (grafica.EsPromedioDiario)
-                                {
-                                    <text>Los triángulos indican alertas de rango y los rombos promedios diarios incompletos.</text>
-                                }
-                                else
-                                {
-                                    <text>Los cuatro valores del día permanecen visibles; los triángulos indican alertas de rango.</text>
-                                }
-                                Usa la leyenda para mostrar u ocultar ambientes.
+                                Desplázate horizontalmente para recorrer el rango. Los triángulos indican lecturas fuera de rango.
+                                Las líneas discontinuas muestran los límites mínimo y máximo de cada ambiente.
+                                Usa la leyenda para mostrar u ocultar ambientes; la hora exacta aparece al pasar sobre un punto.
                             </div>
                         }
 
@@ -243,7 +212,7 @@ else
                                         Observaciones de @grafica.Nombre
                                     </h3>
                                     <p class="text-secondary small mb-0">
-                                        @Model.TituloPeriodo · @Model.FechaDesde.ToString("dd/MM/yyyy") al @Model.FechaHasta.ToString("dd/MM/yyyy")
+                                        @Model.TituloPeriodo
                                     </p>
                                 </div>
                                 <span class="badge text-bg-light observations-count">
